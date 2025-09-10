@@ -15,6 +15,15 @@ const api = axios.create({
   },
 });
 
+// Создаем отдельный экземпляр для production (без baseURL)
+const productionApi = axios.create({
+  timeout: 10000,
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  },
+});
+
 
 // Кэш для API запросов
 const cache = new Map();
@@ -59,22 +68,26 @@ export const apiService = {
   // Получить id-to-name mapping
   async getIdToName() {
     return getCachedData('id-to-name', async () => {
-      const url = process.env.NODE_ENV === 'development' 
-        ? '/cdn/gifts/id-to-name.json'
-        : '/api/proxy?url=' + encodeURIComponent('https://cdn.changes.tg/gifts/id-to-name.json');
-      const response = await api.get(url);
-      return response.data;
+      if (process.env.NODE_ENV === 'development') {
+        const response = await api.get('/cdn/gifts/id-to-name.json');
+        return response.data;
+      } else {
+        const response = await productionApi.get('/api/proxy?url=' + encodeURIComponent('https://cdn.changes.tg/gifts/id-to-name.json'));
+        return response.data;
+      }
     });
   },
 
   // Получить Radar.json для предзагрузки
   async getRadarJson() {
     return getCachedData('radar', async () => {
-      const url = process.env.NODE_ENV === 'development' 
-        ? '/cdn/gifts/models/Jingle%20Bells/lottie/Radar.json'
-        : '/api/proxy?url=' + encodeURIComponent('https://cdn.changes.tg/gifts/models/Jingle%20Bells/lottie/Radar.json');
-      const response = await api.get(url);
-      return response.data;
+      if (process.env.NODE_ENV === 'development') {
+        const response = await api.get('/cdn/gifts/models/Jingle%20Bells/lottie/Radar.json');
+        return response.data;
+      } else {
+        const response = await productionApi.get('/api/proxy?url=' + encodeURIComponent('https://cdn.changes.tg/gifts/models/Jingle%20Bells/lottie/Radar.json'));
+        return response.data;
+      }
     });
   },
 
@@ -122,35 +135,43 @@ export const apiService = {
   // Получить Lottie анимацию для модели
   async getLottieModel(giftName, modelName) {
     return getCachedData(`lottie-${giftName}-${modelName}`, async () => {
-      const url = process.env.NODE_ENV === 'development' 
-        ? `/cdn/gifts/models/${encodeURIComponent(giftName)}/lottie/${encodeURIComponent(modelName)}.json`
-        : '/api/proxy?url=' + encodeURIComponent(`https://cdn.changes.tg/gifts/models/${encodeURIComponent(giftName)}/lottie/${encodeURIComponent(modelName)}.json`);
-      const response = await api.get(url);
-      return response.data;
+      if (process.env.NODE_ENV === 'development') {
+        const response = await api.get(`/cdn/gifts/models/${encodeURIComponent(giftName)}/lottie/${encodeURIComponent(modelName)}.json`);
+        return response.data;
+      } else {
+        const response = await productionApi.get('/api/proxy?url=' + encodeURIComponent(`https://cdn.changes.tg/gifts/models/${encodeURIComponent(giftName)}/lottie/${encodeURIComponent(modelName)}.json`));
+        return response.data;
+      }
     });
   },
 
   // Получить Original.json для подарка при выборе
   async getOriginalLottie(giftName) {
     return getCachedData(`original-${giftName}`, async () => {
-      const url = process.env.NODE_ENV === 'development' 
-        ? `/cdn/gifts/models/${encodeURIComponent(giftName)}/lottie/Original.json`
-        : '/api/proxy?url=' + encodeURIComponent(`https://cdn.changes.tg/gifts/models/${encodeURIComponent(giftName)}/lottie/Original.json`);
-      const response = await api.get(url);
-      return response.data;
+      if (process.env.NODE_ENV === 'development') {
+        const response = await api.get(`/cdn/gifts/models/${encodeURIComponent(giftName)}/lottie/Original.json`);
+        return response.data;
+      } else {
+        const response = await productionApi.get('/api/proxy?url=' + encodeURIComponent(`https://cdn.changes.tg/gifts/models/${encodeURIComponent(giftName)}/lottie/Original.json`));
+        return response.data;
+      }
     });
   },
 
   // Получить изображение паттерна
   async getPatternImage(giftName, patternName) {
     return getCachedData(`pattern-image-${giftName}-${patternName}`, async () => {
-      const url = process.env.NODE_ENV === 'development' 
-        ? `/cdn/gifts/patterns/${encodeURIComponent(giftName)}/png/${encodeURIComponent(patternName)}.png`
-        : '/api/proxy?url=' + encodeURIComponent(`https://cdn.changes.tg/gifts/patterns/${encodeURIComponent(giftName)}/png/${encodeURIComponent(patternName)}.png`);
-      const response = await api.get(url, {
-        responseType: 'blob'
-      });
-      return URL.createObjectURL(response.data);
+      if (process.env.NODE_ENV === 'development') {
+        const response = await api.get(`/cdn/gifts/patterns/${encodeURIComponent(giftName)}/png/${encodeURIComponent(patternName)}.png`, {
+          responseType: 'blob'
+        });
+        return URL.createObjectURL(response.data);
+      } else {
+        const response = await productionApi.get('/api/proxy?url=' + encodeURIComponent(`https://cdn.changes.tg/gifts/patterns/${encodeURIComponent(giftName)}/png/${encodeURIComponent(patternName)}.png`), {
+          responseType: 'blob'
+        });
+        return URL.createObjectURL(response.data);
+      }
     });
   },
 
