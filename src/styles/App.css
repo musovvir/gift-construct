@@ -1,0 +1,1045 @@
+/* Основные стили для приложения */
+
+/* Глобальный reset для кнопок */
+button {
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  border: none !important;
+  background: none !important;
+  font-family: inherit !important;
+  cursor: pointer !important;
+}
+
+button:focus {
+  outline: none !important;
+}
+
+button:focus-visible {
+  outline: none !important;
+}
+
+:root {
+  /* Цвета светлой темы */
+  --tg-theme-bg-color: #ffffff;
+  --tg-theme-text-color: #000000;
+  --tg-theme-hint-color: #999999;
+  --tg-theme-link-color: #2481cc;
+  --tg-theme-button-color: #3390ec;
+  --tg-theme-button-text-color: #ffffff;
+  --tg-theme-secondary-bg-color: #f1f1f1;
+  --tg-theme-empty-cell-color: #e8e8e8; /* Светлый серый для пустых ячеек */
+  
+  /* Дополнительные цвета */
+  --border-color: #e1e5e9;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --success-color: #4bb34b;
+  --error-color: #e53e3e;
+  --warning-color: #ed8936;
+}
+
+/* Темная тема */
+[data-theme="dark"] {
+  --tg-theme-bg-color: #1a1a2e;
+  --tg-theme-text-color: #ffffff;
+  --tg-theme-hint-color: #888888;
+  --tg-theme-link-color: #4a9eff;
+  --tg-theme-button-color: #4a9eff;
+  --tg-theme-button-text-color: #ffffff;
+  --tg-theme-secondary-bg-color: #3a4a6c; /* Более светлый темно-синий для сетки */
+  --tg-theme-empty-cell-color: #4a5a7c; /* Еще более светлый для пустых ячеек */
+  
+  --border-color: #2a2a3e;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --success-color: #4bb34b;
+  --error-color: #e53e3e;
+  --warning-color: #ed8936;
+}
+
+/* Дополнительные стили для темной темы */
+[data-theme="dark"] {
+  --tg-theme-hint-color: #707579;
+  --tg-theme-link-color: #62bcf9;
+  --tg-theme-button-color: #5288c1;
+  --tg-theme-button-text-color: #ffffff;
+  --tg-theme-secondary-bg-color: #181818;
+  --tg-theme-empty-cell-color: #2a2a2a; /* Темно-серый для пустых ячеек */
+  
+  --border-color: #2c2c2e;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Сброс стилей */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: var(--tg-theme-bg-color);
+  color: var(--tg-theme-text-color);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  padding: 20px;
+  background: var(--tg-theme-bg-color);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.app-footer {
+  padding: 20px;
+  background: var(--tg-theme-bg-color);
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+  margin-top: auto;
+}
+
+.app-footer p {
+  margin: 0;
+  color: var(--tg-theme-hint-color);
+  font-size: 14px;
+}
+
+.footer-link {
+  color: var(--tg-theme-link-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+  color: var(--tg-theme-button-color);
+  text-decoration: underline;
+}
+
+.app-header h1 {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--tg-theme-text-color);
+  margin: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100% - 60px); /* Оставляем место для кнопки темы */
+}
+
+.header-link {
+  color: var(--tg-theme-link-color);
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.header-link:hover {
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+.theme-toggle {
+  background: var(--tg-theme-button-color);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+.app-main {
+  flex: 1;
+  padding: 20px;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Конструктор подарков */
+.gift-constructor {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Сетка */
+.grid-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--tg-theme-secondary-bg-color);
+  padding: 16px;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px var(--shadow-color);
+}
+
+.grid-row {
+  display: flex;
+  gap: 8px;
+}
+
+/* Ячейки сетки */
+.grid-cell {
+  position: relative;
+  flex: 1; /* Растягиваемся под grid */
+  aspect-ratio: 1; /* Сохраняем квадратную форму */
+  min-width: 80px; /* Минимальная ширина */
+  min-height: 80px; /* Минимальная высота */
+  border-radius: 12px;
+  background: var(--tg-theme-bg-color);
+  border: none; /* Убираем рамку */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Убрали hover эффект у ячеек */
+
+.grid-cell.empty {
+  background: var(--tg-theme-empty-cell-color);
+}
+
+.grid-cell.filled {
+  /* Убираем стили border, так как border убран */
+}
+
+/* Контейнеры внутри ячейки */
+.pattern-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.gift-container {
+  position: relative;
+  width: 70%;
+  height: 70%;
+  z-index: 2;
+}
+
+.lottie-container {
+  width: 100%;
+  height: 100%;
+}
+
+.gift-loading {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cell-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--tg-theme-hint-color);
+  font-size: 32px;
+  font-weight: 300;
+}
+
+/* Контейнер для кнопок строк */
+.row-buttons {
+  display: flex !important;
+  gap: 8px !important;
+  margin: 0 12px !important;
+  width: calc(100% - 24px) !important;
+  box-sizing: border-box !important;
+}
+
+.row-buttons-top {
+  margin-top: 20px !important;
+  margin-bottom: 16px !important;
+}
+
+.row-buttons-bottom {
+  margin-top: 16px !important;
+}
+
+/* Кнопки строк */
+.row-btn {
+  padding: 12px 16px !important;
+  background: var(--tg-theme-secondary-bg-color) !important;
+  color: var(--tg-theme-text-color) !important;
+  border: 2px solid var(--border-color) !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  width: 48% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  box-sizing: border-box !important;
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+/* Кнопка добавления */
+.add-btn:hover {
+  background: var(--tg-theme-button-color) !important;
+  color: var(--tg-theme-button-text-color) !important;
+  border-color: var(--tg-theme-button-color) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px var(--shadow-color) !important;
+}
+
+.add-btn:active,
+.add-btn:focus:active,
+.add-btn:active:focus,
+.add-btn:active:focus:not(:disabled),
+.add-btn:active:not(:disabled),
+.add-btn:focus:active:not(:disabled) {
+  background: var(--tg-theme-button-color) !important;
+  color: var(--tg-theme-button-text-color) !important;
+  border-color: var(--tg-theme-button-color) !important;
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 8px var(--shadow-color) !important;
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+/* Кнопка удаления */
+.remove-btn {
+  background: var(--tg-theme-hint-color, #8e8e93) !important;
+  color: white !important;
+  border-color: var(--tg-theme-hint-color, #8e8e93) !important;
+}
+
+.remove-btn:hover:not(:disabled) {
+  background: #7c7c82 !important;
+  border-color: #7c7c82 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(142, 142, 147, 0.3) !important;
+}
+
+.remove-btn:active:not(:disabled),
+.remove-btn:focus:active:not(:disabled) {
+  background: #6a6a6f !important;
+  border-color: #6a6a6f !important;
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 8px rgba(142, 142, 147, 0.3) !important;
+}
+
+.remove-btn:disabled {
+  background: var(--tg-theme-hint-color) !important;
+  color: var(--tg-theme-secondary-bg-color) !important;
+  border-color: var(--tg-theme-hint-color) !important;
+  cursor: not-allowed !important;
+  opacity: 0.5 !important;
+}
+
+/* Фокус для всех кнопок */
+.row-btn:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(51, 144, 236, 0.1) !important;
+}
+
+.row-btn:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(51, 144, 236, 0.1) !important;
+}
+
+/* Дополнительные стили для предотвращения сброса при нажатии */
+.row-btn:active,
+.row-btn:focus:active,
+.row-btn:active:focus {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Дополнительные стили для кнопок модалки */
+.btn:active,
+.btn:focus:active,
+.btn:active:focus {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Дополнительные стили для кнопок добавления рядов */
+.row-btn:active,
+.row-btn:focus:active,
+.row-btn:active:focus,
+.row-btn:active:not(:disabled),
+.row-btn:focus:active:not(:disabled) {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+
+/* Модальное окно */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: var(--tg-theme-bg-color);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 480px;
+  height: 90vh; /* 90% высоты экрана */
+  max-height: 90vh; /* 90% высоты экрана */
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 0 10px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px 6px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 12px;
+}
+
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--tg-theme-text-color);
+}
+
+.copy-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--tg-theme-hint-color);
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.copy-btn:hover {
+  background: var(--tg-theme-secondary-bg-color);
+  color: var(--tg-theme-text-color);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: var(--tg-theme-hint-color);
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: var(--tg-theme-secondary-bg-color);
+  color: var(--tg-theme-text-color);
+}
+
+.modal-body {
+  padding: 0 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-top: 1px solid var(--border-color);
+  margin-top: 12px;
+}
+
+/* Форма */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--tg-theme-text-color);
+  font-size: 14px;
+}
+
+/* Поисковый селект */
+.searchable-select {
+  position: relative;
+  width: 100%;
+}
+
+.searchable-select.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.search-container {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--tg-theme-hint-color);
+  z-index: 1;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 16px 12px 40px;
+  background: var(--tg-theme-secondary-bg-color);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--tg-theme-text-color);
+  font-size: 16px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  border-color: var(--tg-theme-button-color);
+  box-shadow: 0 0 0 3px rgba(51, 144, 236, 0.1);
+}
+
+.search-input::placeholder {
+  color: var(--tg-theme-hint-color);
+}
+
+.select-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--tg-theme-bg-color);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-height: 48px;
+}
+
+.select-display:hover {
+  border-color: var(--tg-theme-button-color);
+}
+
+.searchable-select.open .select-display {
+  border-color: var(--tg-theme-button-color);
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.select-value {
+  flex: 1;
+  color: var(--tg-theme-text-color);
+  font-size: 16px;
+}
+
+.select-value.placeholder {
+  color: var(--tg-theme-hint-color);
+}
+
+
+.select-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 20px; /* Фиксированная высота для предотвращения изменения размера */
+  width: 20px; /* Фиксированная ширина */
+  position: relative;
+}
+
+.clear-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--tg-theme-hint-color);
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.clear-btn:hover {
+  background: var(--tg-theme-secondary-bg-color);
+  color: var(--tg-theme-text-color);
+}
+
+.arrow {
+  transition: transform 0.3s ease;
+  color: var(--tg-theme-hint-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  width: 20px;
+  position: relative;
+}
+
+.arrow svg {
+  width: 12px;
+  height: 12px;
+}
+
+.arrow.up {
+  transform: translate(-50%, -50%) rotate(180deg);
+}
+
+.select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--tg-theme-bg-color);
+  border: 2px solid var(--tg-theme-button-color);
+  border-top: none;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  box-shadow: 0 4px 16px var(--shadow-color);
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.options-list {
+  padding: 4px 0;
+}
+
+.option {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 16px;
+  color: var(--tg-theme-text-color);
+}
+
+.option:hover {
+  background: var(--tg-theme-secondary-bg-color);
+}
+
+.option.selected {
+  background: var(--tg-theme-button-color);
+  color: var(--tg-theme-button-text-color);
+}
+
+.no-options {
+  padding: 16px;
+  text-align: center;
+  color: var(--tg-theme-hint-color);
+  font-size: 14px;
+}
+
+/* Кнопки */
+.btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  min-height: 48px;
+}
+
+.btn-primary {
+  background: var(--tg-theme-secondary-bg-color) !important;
+  color: var(--tg-theme-text-color) !important;
+  border: 2px solid var(--border-color) !important;
+}
+
+.btn-primary:hover {
+  background: var(--border-color) !important;
+  border-color: var(--tg-theme-button-color) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px var(--shadow-color) !important;
+}
+
+.btn-primary:active,
+.btn-primary:focus:active,
+.btn-primary:active:focus {
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 8px var(--shadow-color) !important;
+  background: var(--border-color) !important;
+  border-color: var(--tg-theme-button-color) !important;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  background: var(--tg-theme-secondary-bg-color) !important;
+  color: var(--tg-theme-text-color) !important;
+  border: 2px solid var(--border-color) !important;
+}
+
+.btn-secondary:hover {
+  background: var(--border-color) !important;
+  border-color: var(--tg-theme-button-color) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px var(--shadow-color) !important;
+}
+
+.btn-secondary:active,
+.btn-secondary:focus:active,
+.btn-secondary:active:focus {
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 8px var(--shadow-color) !important;
+  background: var(--border-color) !important;
+  border-color: var(--tg-theme-button-color) !important;
+}
+
+
+.loading-spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 40px 20px;
+}
+
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.loading-spinner .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--tg-theme-secondary-bg-color);
+  border-top: 3px solid var(--tg-theme-button-color);
+  border-radius: 50% !important;
+  animation: spin 1s linear infinite;
+  aspect-ratio: 1;
+}
+
+.spinner-small .spinner {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+.spinner-large .spinner {
+  width: 60px;
+  height: 60px;
+  border-width: 4px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-message {
+  text-align: center;
+}
+
+.main-message {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--tg-theme-text-color);
+  margin-bottom: 4px;
+}
+
+.sub-message {
+  font-size: 14px;
+  color: var(--tg-theme-hint-color);
+}
+
+.select-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--tg-theme-secondary-bg-color);
+  border-radius: 12px;
+  color: var(--tg-theme-hint-color);
+  font-size: 14px;
+}
+
+/* Состояние ошибки */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.error-state h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--tg-theme-text-color);
+  margin-bottom: 8px;
+}
+
+.error-state p {
+  color: var(--tg-theme-hint-color);
+  margin-bottom: 24px;
+  max-width: 300px;
+}
+
+.retry-button {
+  padding: 12px 24px;
+  background: var(--tg-theme-button-color);
+  color: var(--tg-theme-button-text-color);
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.retry-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px var(--shadow-color);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .app-header {
+    padding: 16px;
+  }
+  
+  .app-header h1 {
+    font-size: 14px;
+  }
+  
+  .theme-toggle {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+  
+  .app-main {
+    padding: 0; /* Убираем отступы по бокам */
+  }
+  
+  .grid-container {
+    align-items: stretch; /* Растягиваем на полную ширину */
+  }
+  
+  .grid {
+    width: 100%; /* Полная ширина на мобилках */
+    max-width: 100%; /* Ограничиваем максимальную ширину */
+  }
+  
+  .grid-cell {
+    min-width: 60px; /* Уменьшаем минимальный размер для мобилок */
+    min-height: 60px;
+  }
+  
+  .modal-content {
+    margin: 10px;
+    height: 90vh; /* 90% высоты экрана */
+    max-height: 90vh; /* 90% высоты экрана */
+  }
+  
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 12px;
+  }
+  
+  .app-header h1 {
+    font-size: 10px;
+    white-space: normal;
+    line-height: 1.1;
+    max-width: calc(100% - 50px);
+  }
+  
+  .theme-toggle {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  
+  .app-main {
+    padding: 0; /* Убираем отступы по бокам */
+  }
+  
+  .grid-container {
+    align-items: stretch; /* Растягиваем на полную ширину */
+  }
+  
+  .grid {
+    width: 100%; /* Полная ширина на мобилках */
+    max-width: 100%; /* Ограничиваем максимальную ширину */
+    gap: 6px;
+    padding: 12px;
+  }
+  
+  .grid-cell {
+    min-width: 50px; /* Еще меньше для маленьких экранов */
+    min-height: 50px;
+  }
+  
+  .grid-row {
+    gap: 6px;
+  }
+  
+  .modal-content {
+    height: 90vh; /* 90% высоты экрана */
+    max-height: 90vh; /* 90% высоты экрана */
+    margin: 5px;
+  }
+  
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}
+
+/* Анимация загрузки для селектов */
+.select-actions .loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tg-theme-hint-color);
+  height: 20px; /* Фиксированная высота для центрирования */
+  width: 20px; /* Фиксированная ширина для центрирования */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.select-actions .loading-spinner svg {
+  width: 16px;
+  height: 16px;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.searchable-select.loading {
+  pointer-events: none;
+}
+
+.searchable-select.loading .select-display {
+  opacity: 0.8;
+}

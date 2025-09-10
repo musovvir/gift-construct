@@ -1,0 +1,33 @@
+{
+  "name": "constructor-react-v2",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run proxy\" \"npm run start\"",
+    "start": "vite",
+    "proxy": "node proxy-server.js",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^4.36.1",
+    "axios": "^1.11.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "concurrently": "^8.2.2",
+    "cors": "^2.8.5",
+    "eslint": "^9.33.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "express": "^4.19.2",
+    "globals": "^16.3.0",
+    "http-proxy-middleware": "^2.0.6",
+    "vite": "^4.5.3"
+  }
+}
