@@ -3,6 +3,7 @@ import SearchableSelect from './SearchableSelect';
 import {
   useBackdropsForGift,
   useModelsForGift,
+  usePatternsForGift,
   useOriginalLottie
 } from '../hooks/useApi';
 
@@ -36,6 +37,11 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
     data: giftModels = [], 
     isLoading: isModelsLoading 
   } = useModelsForGift(formData.gift);
+
+  const { 
+    data: giftPatterns = [], 
+    isLoading: isPatternsLoading 
+  } = usePatternsForGift(formData.gift);
 
   // Загружаем Original.json при выборе подарка
   const { 
@@ -205,6 +211,21 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
               searchPlaceholder="Поиск фонов..."
               disabled={!formData.gift}
               isLoading={formData.gift && isBackdropsLoading}
+            />
+          </div>
+
+          {/* Выбор узора */}
+          <div className="form-group">
+            <label htmlFor="pattern-select">Узор</label>
+            <SearchableSelect
+              id="pattern-select"
+              value={formData.pattern}
+              onChange={(value) => handleInputChange('pattern', value)}
+              options={giftPatterns}
+              placeholder={formData.gift ? "Выберите узор" : "Сначала выберите подарок"}
+              searchPlaceholder="Поиск узоров..."
+              disabled={!formData.gift}
+              isLoading={formData.gift && isPatternsLoading}
             />
           </div>
 

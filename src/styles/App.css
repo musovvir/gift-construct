@@ -225,6 +225,41 @@ body {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+/* Убираем все эффекты при клике */
+.grid-cell:active,
+.grid-cell:focus,
+.grid-cell:focus-visible,
+.grid-cell:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+  background: var(--tg-theme-bg-color) !important;
+  transform: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.grid-cell.filled:active,
+.grid-cell.filled:focus,
+.grid-cell.filled:focus-visible,
+.grid-cell.filled:focus-within {
+  background: var(--tg-theme-bg-color) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.grid-cell.empty:active,
+.grid-cell.empty:focus,
+.grid-cell.empty:focus-visible,
+.grid-cell.empty:focus-within {
+  background: var(--tg-theme-empty-cell-color) !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* Убрали hover эффект у ячеек */
