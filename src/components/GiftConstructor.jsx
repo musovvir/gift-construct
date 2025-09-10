@@ -81,7 +81,6 @@ const GiftConstructor = ({ telegramWebApp }) => {
             model: cellData.model,
             backdrop: cellData.backdrop,
             pattern: cellData.pattern,
-            useDefaultPattern: cellData.useDefaultPattern || false,
             isEmpty: !cellData.gift, // Ячейка пустая, если нет подарка
           };
         }
@@ -117,7 +116,6 @@ const GiftConstructor = ({ telegramWebApp }) => {
             model: null,
             backdrop: null,
             pattern: null,
-            useDefaultPattern: false,
             isEmpty: true,
           };
         }

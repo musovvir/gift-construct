@@ -471,8 +471,8 @@ body {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   width: 100%;
   max-width: 480px;
-  height: 80vh; /* 80% высоты экрана */
-  max-height: 80vh; /* 80% высоты экрана */
+  height: 90vh; /* 90% высоты экрана */
+  max-height: 90vh; /* 90% высоты экрана */
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -928,63 +928,6 @@ body {
   box-shadow: 0 4px 16px var(--shadow-color);
 }
 
-/* Стили для чекбокса */
-.checkbox-group {
-  margin-top: 12px;
-  margin-bottom: 8px;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  padding: 8px 0;
-  transition: opacity 0.2s ease;
-}
-
-.checkbox-label:hover {
-  opacity: 0.8;
-}
-
-.checkbox-input {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  accent-color: var(--tg-theme-button-color);
-  border-radius: 4px;
-  border: 2px solid var(--border-color);
-  background: var(--tg-theme-bg-color);
-  transition: all 0.2s ease;
-}
-
-.checkbox-input:checked {
-  background: var(--tg-theme-button-color);
-  border-color: var(--tg-theme-button-color);
-}
-
-.checkbox-input:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-  background: var(--tg-theme-secondary-bg-color);
-  border-color: var(--border-color);
-}
-
-.checkbox-text {
-  font-size: 15px;
-  color: var(--tg-theme-text-color);
-  font-weight: 500;
-  line-height: 1.4;
-}
-
-.checkbox-label:has(.checkbox-input:disabled) .checkbox-text {
-  opacity: 0.5;
-  color: var(--tg-theme-hint-color);
-}
 
 /* Адаптивность */
 @media (max-width: 768px) {
@@ -1022,8 +965,8 @@ body {
   
   .modal-content {
     margin: 10px;
-    height: 75vh; /* 75% высоты экрана */
-    max-height: 75vh; /* 75% высоты экрана */
+    height: 90vh; /* 90% высоты экрана */
+    max-height: 90vh; /* 90% высоты экрана */
   }
   
   .modal-header,
@@ -1077,8 +1020,8 @@ body {
   }
   
   .modal-content {
-    height: 70vh; /* 70% высоты экрана */
-    max-height: 70vh; /* 70% высоты экрана */
+    height: 90vh; /* 90% высоты экрана */
+    max-height: 90vh; /* 90% высоты экрана */
     margin: 5px;
   }
   

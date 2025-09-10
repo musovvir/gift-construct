@@ -153,7 +153,7 @@ const GridCell = ({ cell, onClick, preloadedData }) => {
             getPatternColor(),
             patternImageUrl,
             lottieData,
-            cell.useDefaultPattern || false
+false
           )}
         </div>
       )}

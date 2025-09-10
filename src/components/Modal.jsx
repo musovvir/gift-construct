@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import SearchableSelect from './SearchableSelect';
-import { 
-  useBackdropsForGift, 
-  useModelsForGift, 
-  usePatternsForGift,
+import {
+  useBackdropsForGift,
+  useModelsForGift,
   useOriginalLottie
 } from '../hooks/useApi';
 
@@ -14,8 +13,6 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
     backdrop: '',
     pattern: '',
   });
-  
-  const [useDefaultPattern, setUseDefaultPattern] = useState(false);
 
   // Обновляем formData при открытии модалки
   useEffect(() => {
@@ -26,7 +23,6 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
         backdrop: cell.backdrop || '',
         pattern: cell.pattern || '',
       });
-      setUseDefaultPattern(cell.useDefaultPattern || false);
     }
   }, [isOpen, cell]);
 
@@ -35,16 +31,11 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
     data: giftBackdrops = [], 
     isLoading: isBackdropsLoading 
   } = useBackdropsForGift(formData.gift);
-  
+
   const { 
     data: giftModels = [], 
     isLoading: isModelsLoading 
   } = useModelsForGift(formData.gift);
-  
-  const { 
-    data: giftPatterns = [], 
-    isLoading: isPatternsLoading 
-  } = usePatternsForGift(formData.gift);
 
   // Загружаем Original.json при выборе подарка
   const { 
@@ -91,18 +82,10 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
     
     // Применяем изменения если есть подарок (с Original.json) или модель
     if (newFormData.gift && (newFormData.model || field === 'gift')) {
-      onApply({ ...newFormData, useDefaultPattern });
+      onApply(newFormData);
     }
   };
   
-  // Обработчик изменения чекбокса
-  const handleCheckboxChange = (checked) => {
-    setUseDefaultPattern(checked);
-    
-    // Применяем изменения к ячейке сразу
-    const newData = { ...formData, useDefaultPattern: checked };
-    onApply(newData);
-  };
 
   // Обработчик закрытия модалки - просто закрывает без повторного применения
   const handleApply = () => {
@@ -117,7 +100,6 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
       backdrop: '',
       pattern: '',
     });
-    setUseDefaultPattern(false);
     onReset();
   };
 
@@ -135,13 +117,10 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
     // Обновляем formData
     setFormData(copiedData);
     
-    // Копируем состояние чекбокса из предыдущей ячейки
-    setUseDefaultPattern(previousCell.useDefaultPattern || false);
-    
     // Применяем изменения к ячейке через handleInputChange для корректной обработки
     if (copiedData.model) {
       // Применяем все данные сразу, как если бы пользователь их ввел
-      onApply({ ...copiedData, useDefaultPattern: previousCell.useDefaultPattern || false });
+      onApply(copiedData);
     }
   };
 
@@ -229,34 +208,6 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
             />
           </div>
 
-          {/* Выбор узора */}
-          <div className="form-group">
-            <label htmlFor="pattern-select">Узор</label>
-            <SearchableSelect
-              id="pattern-select"
-              value={formData.pattern}
-              onChange={(value) => handleInputChange('pattern', value)}
-              options={giftPatterns}
-              placeholder={formData.gift ? "Выберите узор" : "Сначала выберите подарок"}
-              searchPlaceholder="Поиск узоров..."
-              disabled={!formData.gift}
-              isLoading={formData.gift && isPatternsLoading}
-            />
-          </div>
-
-          {/* Чекбокс для дефолтного узора */}
-          <div className="form-group checkbox-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={useDefaultPattern}
-                onChange={(e) => handleCheckboxChange(e.target.checked)}
-                disabled={!formData.gift}
-                className="checkbox-input"
-              />
-              <span className="checkbox-text">Использовать дефолтный узор</span>
-            </label>
-          </div>
         </div>
 
         <div className="modal-footer">
