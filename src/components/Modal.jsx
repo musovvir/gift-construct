@@ -14,6 +14,8 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
     backdrop: '',
     pattern: '',
   });
+  
+  const [useDefaultPattern, setUseDefaultPattern] = useState(false);
 
   // Обновляем formData при открытии модалки
   useEffect(() => {
@@ -24,6 +26,7 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
         backdrop: cell.backdrop || '',
         pattern: cell.pattern || '',
       });
+      setUseDefaultPattern(cell.useDefaultPattern || false);
     }
   }, [isOpen, cell]);
 
@@ -88,8 +91,17 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
     
     // Применяем изменения если есть подарок (с Original.json) или модель
     if (newFormData.gift && (newFormData.model || field === 'gift')) {
-      onApply(newFormData);
+      onApply({ ...newFormData, useDefaultPattern });
     }
+  };
+  
+  // Обработчик изменения чекбокса
+  const handleCheckboxChange = (checked) => {
+    setUseDefaultPattern(checked);
+    
+    // Применяем изменения к ячейке сразу
+    const newData = { ...formData, useDefaultPattern: checked };
+    onApply(newData);
   };
 
   // Обработчик закрытия модалки - просто закрывает без повторного применения
@@ -105,6 +117,7 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
       backdrop: '',
       pattern: '',
     });
+    setUseDefaultPattern(false);
     onReset();
   };
 
@@ -122,10 +135,13 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
     // Обновляем formData
     setFormData(copiedData);
     
+    // Копируем состояние чекбокса из предыдущей ячейки
+    setUseDefaultPattern(previousCell.useDefaultPattern || false);
+    
     // Применяем изменения к ячейке через handleInputChange для корректной обработки
     if (copiedData.model) {
       // Применяем все данные сразу, как если бы пользователь их ввел
-      onApply(copiedData);
+      onApply({ ...copiedData, useDefaultPattern: previousCell.useDefaultPattern || false });
     }
   };
 
@@ -226,6 +242,20 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
               disabled={!formData.gift}
               isLoading={formData.gift && isPatternsLoading}
             />
+          </div>
+
+          {/* Чекбокс для дефолтного узора */}
+          <div className="form-group checkbox-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={useDefaultPattern}
+                onChange={(e) => handleCheckboxChange(e.target.checked)}
+                disabled={!formData.gift}
+                className="checkbox-input"
+              />
+              <span className="checkbox-text">Использовать дефолтный узор</span>
+            </label>
           </div>
         </div>
 

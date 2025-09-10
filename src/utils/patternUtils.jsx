@@ -100,7 +100,8 @@ export const createCircularPattern = (
   backdrop, 
   patternColor,
   patternImageUrl,
-  lottieData = null
+  lottieData = null,
+  useDefaultPattern = false
 ) => {
   if (!pattern) return null;
 
@@ -138,8 +139,8 @@ export const createCircularPattern = (
         zIndex: 1,
       };
 
-      if (patternImageUrl) {
-        // Используем изображение паттерна
+      if (patternImageUrl && !useDefaultPattern) {
+        // Используем изображение паттерна только если не выбран дефолтный узор
         patternElements.push(
           <img
             key={`pattern-${ringIndex}-${i}`}
@@ -157,10 +158,10 @@ export const createCircularPattern = (
           />
         );
       } else {
-        // Fallback: используем простую точку
+        // Используем простую точку (дефолтный узор или fallback)
         patternElements.push(
           <div
-            key={`pattern-fallback-${ringIndex}-${i}`}
+            key={`pattern-${useDefaultPattern ? 'default' : 'fallback'}-${ringIndex}-${i}`}
             style={{
               ...elementStyle,
               background: patternColor,

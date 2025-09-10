@@ -152,7 +152,8 @@ const GridCell = ({ cell, onClick, preloadedData }) => {
             cell.backdrop,
             getPatternColor(),
             patternImageUrl,
-            lottieData
+            lottieData,
+            cell.useDefaultPattern || false
           )}
         </div>
       )}
