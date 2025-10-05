@@ -262,14 +262,19 @@ body {
   box-shadow: none !important;
 }
 
-/* Убрали hover эффект у ячеек */
+/* Hover эффект для ячеек с анимацией */
+.grid-cell.filled:hover {
+  cursor: pointer;
+}
 
 .grid-cell.empty {
   background: var(--tg-theme-empty-cell-color);
+  cursor: pointer;
 }
 
 .grid-cell.filled {
   /* Убираем стили border, так как border убран */
+  cursor: pointer;
 }
 
 /* Контейнеры внутри ячейки */

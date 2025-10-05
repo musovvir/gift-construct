@@ -1,8 +1,10 @@
 import axios from 'axios';
 
 // Определяем базовый URL для API
-const API_BASE = process.env.NODE_ENV === 'development' 
-  ? 'http://localhost:3001' 
+// В dev режиме можно использовать либо внешний proxy-server (порт 3001), либо встроенный Vite proxy
+const USE_EXTERNAL_PROXY = import.meta.env.VITE_USE_EXTERNAL_PROXY === 'true';
+const API_BASE = import.meta.env.DEV 
+  ? (USE_EXTERNAL_PROXY ? 'http://localhost:3001' : '')
   : '/api/proxy?url=' + encodeURIComponent('https://api.changes.tg');
 
 // Создаем экземпляр axios с базовой конфигурацией
@@ -52,7 +54,8 @@ export const apiService = {
   // Получить список всех подарков
   async getGifts() {
     return getCachedData('gifts', async () => {
-      const response = await api.get('/gifts');
+      const url = USE_EXTERNAL_PROXY ? '/gifts' : '/api/gifts';
+      const response = await api.get(url);
       return response.data;
     });
   },
@@ -60,7 +63,8 @@ export const apiService = {
   // Получить список всех фонов с сортировкой
   async getBackdrops() {
     return getCachedData('backdrops', async () => {
-      const response = await api.get('/backdrops?sort=asc');
+      const url = USE_EXTERNAL_PROXY ? '/backdrops?sort=asc' : '/api/backdrops?sort=asc';
+      const response = await api.get(url);
       return response.data;
     });
   },
@@ -68,8 +72,9 @@ export const apiService = {
   // Получить id-to-name mapping
   async getIdToName() {
     return getCachedData('id-to-name', async () => {
-      if (process.env.NODE_ENV === 'development') {
-        const response = await api.get('/cdn/gifts/id-to-name.json');
+      if (import.meta.env.DEV) {
+        const url = USE_EXTERNAL_PROXY ? '/cdn/gifts/id-to-name.json' : '/cdn/gifts/id-to-name.json';
+        const response = await api.get(url);
         return response.data;
       } else {
         const response = await productionApi.get('/api/proxy?url=' + encodeURIComponent('https://cdn.changes.tg/gifts/id-to-name.json'));
@@ -81,8 +86,9 @@ export const apiService = {
   // Получить Radar.json для предзагрузки
   async getRadarJson() {
     return getCachedData('radar', async () => {
-      if (process.env.NODE_ENV === 'development') {
-        const response = await api.get('/cdn/gifts/models/Jingle%20Bells/lottie/Radar.json');
+      if (import.meta.env.DEV) {
+        const url = USE_EXTERNAL_PROXY ? '/cdn/gifts/models/Jingle%20Bells/lottie/Radar.json' : '/cdn/gifts/models/Jingle%20Bells/lottie/Radar.json';
+        const response = await api.get(url);
         return response.data;
       } else {
         const response = await productionApi.get('/api/proxy?url=' + encodeURIComponent('https://cdn.changes.tg/gifts/models/Jingle%20Bells/lottie/Radar.json'));
@@ -94,7 +100,8 @@ export const apiService = {
   // Получить фоны для конкретного подарка (только названия)
   async getBackdropsForGift(giftName) {
     return getCachedData(`backdrops-${giftName}`, async () => {
-      const response = await api.get(`/backdrops/${encodeURIComponent(giftName)}`);
+      const url = USE_EXTERNAL_PROXY ? `/backdrops/${encodeURIComponent(giftName)}` : `/api/backdrops/${encodeURIComponent(giftName)}`;
+      const response = await api.get(url);
       // Извлекаем только названия из объектов {name, rarityPermille}
       return Array.isArray(response.data) 
         ? response.data.map(item => typeof item === 'string' ? item : item.name || item)
@@ -105,7 +112,8 @@ export const apiService = {
   // Получить полные данные фонов для конкретного подарка (с цветами)
   async getBackdropDetailsForGift(giftName) {
     return getCachedData(`backdrop-details-${giftName}`, async () => {
-      const response = await api.get(`/backdrops/${encodeURIComponent(giftName)}`);
+      const url = USE_EXTERNAL_PROXY ? `/backdrops/${encodeURIComponent(giftName)}` : `/api/backdrops/${encodeURIComponent(giftName)}`;
+      const response = await api.get(url);
       return response.data;
     });
   },
@@ -113,7 +121,8 @@ export const apiService = {
   // Получить модели для конкретного подарка
   async getModelsForGift(giftName) {
     return getCachedData(`models-${giftName}`, async () => {
-      const response = await api.get(`/models/${encodeURIComponent(giftName)}`);
+      const url = USE_EXTERNAL_PROXY ? `/models/${encodeURIComponent(giftName)}` : `/api/models/${encodeURIComponent(giftName)}`;
+      const response = await api.get(url);
       // Извлекаем только названия из объектов {name, rarityPermille}
       return Array.isArray(response.data) 
         ? response.data.map(item => typeof item === 'string' ? item : item.name || item)
@@ -124,7 +133,8 @@ export const apiService = {
   // Получить паттерны для конкретного подарка
   async getPatternsForGift(giftName) {
     return getCachedData(`patterns-${giftName}`, async () => {
-      const response = await api.get(`/patterns/${encodeURIComponent(giftName)}`);
+      const url = USE_EXTERNAL_PROXY ? `/patterns/${encodeURIComponent(giftName)}` : `/api/patterns/${encodeURIComponent(giftName)}`;
+      const response = await api.get(url);
       // Извлекаем только названия из объектов {name, rarityPermille}
       return Array.isArray(response.data) 
         ? response.data.map(item => typeof item === 'string' ? item : item.name || item)
@@ -135,8 +145,11 @@ export const apiService = {
   // Получить Lottie анимацию для модели
   async getLottieModel(giftName, modelName) {
     return getCachedData(`lottie-${giftName}-${modelName}`, async () => {
-      if (process.env.NODE_ENV === 'development') {
-        const response = await api.get(`/cdn/gifts/models/${encodeURIComponent(giftName)}/lottie/${encodeURIComponent(modelName)}.json`);
+      if (import.meta.env.DEV) {
+        const url = USE_EXTERNAL_PROXY 
+          ? `/cdn/gifts/models/${encodeURIComponent(giftName)}/lottie/${encodeURIComponent(modelName)}.json`
+          : `/cdn/gifts/models/${encodeURIComponent(giftName)}/lottie/${encodeURIComponent(modelName)}.json`;
+        const response = await api.get(url);
         return response.data;
       } else {
         const response = await productionApi.get('/api/proxy?url=' + encodeURIComponent(`https://cdn.changes.tg/gifts/models/${encodeURIComponent(giftName)}/lottie/${encodeURIComponent(modelName)}.json`));
@@ -148,8 +161,11 @@ export const apiService = {
   // Получить Original.json для подарка при выборе
   async getOriginalLottie(giftName) {
     return getCachedData(`original-${giftName}`, async () => {
-      if (process.env.NODE_ENV === 'development') {
-        const response = await api.get(`/cdn/gifts/models/${encodeURIComponent(giftName)}/lottie/Original.json`);
+      if (import.meta.env.DEV) {
+        const url = USE_EXTERNAL_PROXY 
+          ? `/cdn/gifts/models/${encodeURIComponent(giftName)}/lottie/Original.json`
+          : `/cdn/gifts/models/${encodeURIComponent(giftName)}/lottie/Original.json`;
+        const response = await api.get(url);
         return response.data;
       } else {
         const response = await productionApi.get('/api/proxy?url=' + encodeURIComponent(`https://cdn.changes.tg/gifts/models/${encodeURIComponent(giftName)}/lottie/Original.json`));
@@ -161,8 +177,11 @@ export const apiService = {
   // Получить изображение паттерна
   async getPatternImage(giftName, patternName) {
     return getCachedData(`pattern-image-${giftName}-${patternName}`, async () => {
-      if (process.env.NODE_ENV === 'development') {
-        const response = await api.get(`/cdn/gifts/patterns/${encodeURIComponent(giftName)}/png/${encodeURIComponent(patternName)}.png`, {
+      if (import.meta.env.DEV) {
+        const url = USE_EXTERNAL_PROXY 
+          ? `/cdn/gifts/patterns/${encodeURIComponent(giftName)}/png/${encodeURIComponent(patternName)}.png`
+          : `/cdn/gifts/patterns/${encodeURIComponent(giftName)}/png/${encodeURIComponent(patternName)}.png`;
+        const response = await api.get(url, {
           responseType: 'blob'
         });
         return URL.createObjectURL(response.data);

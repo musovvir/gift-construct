@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run proxy\" \"npm run start\"",
+    "dev": "vite",
+    "dev:proxy": "concurrently \"npm run proxy\" \"npm run start\"",
     "start": "vite",
     "proxy": "node proxy-server.js",
     "build": "vite build",

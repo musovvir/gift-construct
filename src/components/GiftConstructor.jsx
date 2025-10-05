@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Grid from './Grid';
 import Modal from './Modal';
 import LoadingSpinner from './LoadingSpinner';
 import { usePreloadData } from '../hooks/useApi';
+
+// Глобальный счетчик для создания уникальных ID
+let cellIdCounter = 0;
 
 const GiftConstructor = ({ telegramWebApp }) => {
   const [grid, setGrid] = useState(() => {
@@ -12,7 +15,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
       const row = [];
       for (let j = 0; j < 3; j++) {
         row.push({
-          id: `cell-${i}-${j}`,
+          id: `cell-${++cellIdCounter}`,
           row: i,
           col: j,
           gift: null,
@@ -29,6 +32,30 @@ const GiftConstructor = ({ telegramWebApp }) => {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedCell, setSelectedCell] = useState(null);
+  const [animationTrigger, setAnimationTrigger] = useState(0);
+  const animationTimeoutRef = useRef(null);
+
+  // Функция для запуска анимации на всех ячейках с throttling
+  const triggerGridAnimation = () => {
+    // Отменяем предыдущий таймер если он есть
+    if (animationTimeoutRef.current) {
+      clearTimeout(animationTimeoutRef.current);
+    }
+    
+    // Добавляем небольшую задержку и throttling
+    animationTimeoutRef.current = setTimeout(() => {
+      setAnimationTrigger(prev => prev + 1);
+    }, 50);
+  };
+
+  // Очистка таймера при размонтировании
+  useEffect(() => {
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Предзагружаем данные при запуске приложения
   const { 
@@ -140,7 +167,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
     
     for (let j = 0; j < 3; j++) {
       newRow.push({
-        id: `cell-${newRowIndex}-${j}`,
+        id: `cell-${++cellIdCounter}`,
         row: newRowIndex,
         col: j,
         gift: null,
@@ -152,6 +179,9 @@ const GiftConstructor = ({ telegramWebApp }) => {
     }
 
     setGrid([...grid, newRow]);
+
+    // Запускаем анимацию на всех ячейках
+    triggerGridAnimation();
   };
 
   // Добавление нового ряда сверху
@@ -160,7 +190,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
     
     for (let j = 0; j < 3; j++) {
       newRow.push({
-        id: `cell-0-${j}`,
+        id: `cell-${++cellIdCounter}`,
         row: 0,
         col: j,
         gift: null,
@@ -171,16 +201,18 @@ const GiftConstructor = ({ telegramWebApp }) => {
       });
     }
 
-    // Обновляем индексы всех существующих ячеек
+    // Обновляем индексы всех существующих ячеек (но сохраняем их ID)
     const updatedGrid = grid.map((row, rowIndex) =>
       row.map(cell => ({
         ...cell,
-        id: `cell-${rowIndex + 1}-${cell.col}`,
         row: rowIndex + 1,
       }))
     );
 
     setGrid([newRow, ...updatedGrid]);
+
+    // Запускаем анимацию на всех ячейках
+    triggerGridAnimation();
 
     // Обратная связь для Telegram WebApp
     if (telegramWebApp) {
@@ -195,6 +227,9 @@ const GiftConstructor = ({ telegramWebApp }) => {
     const updatedGrid = grid.slice(0, -1);
     setGrid(updatedGrid);
 
+    // Запускаем анимацию на всех ячейках
+    triggerGridAnimation();
+
     // Обратная связь для Telegram WebApp
     if (telegramWebApp) {
       telegramWebApp.HapticFeedback?.impactOccurred('medium');
@@ -207,6 +242,9 @@ const GiftConstructor = ({ telegramWebApp }) => {
 
     const updatedGrid = grid.slice(1);
     setGrid(updatedGrid);
+
+    // Запускаем анимацию на всех ячейках
+    triggerGridAnimation();
 
     // Обратная связь для Telegram WebApp
     if (telegramWebApp) {
@@ -261,6 +299,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
         onRemoveRow={handleRemoveRow}
         onRemoveRowTop={handleRemoveRowTop}
         preloadedData={preloadedData}
+        animationTrigger={animationTrigger}
       />
 
       {modalOpen && selectedCell && (

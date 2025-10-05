@@ -131,7 +131,7 @@ const SearchableSelect = ({
             <div className="options-list">
               {filteredOptions.map((option, index) => (
                 <div
-                  key={`${option}-${index}`}
+                  key={`option-${option}`}
                   className={`option ${option === value ? 'selected' : ''}`}
                   onClick={() => handleOptionSelect(option)}
                 >

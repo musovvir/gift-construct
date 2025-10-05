@@ -1,6 +1,6 @@
 import GridCell from './GridCell';
 
-const Grid = ({ grid, onCellClick, onAddRow, onAddRowTop, onRemoveRow, onRemoveRowTop, preloadedData }) => {
+const Grid = ({ grid, onCellClick, onAddRow, onAddRowTop, onRemoveRow, onRemoveRowTop, preloadedData, animationTrigger }) => {
   return (
     <div className="grid-container">
       <div className="row-buttons row-buttons-top">
@@ -30,18 +30,24 @@ const Grid = ({ grid, onCellClick, onAddRow, onAddRowTop, onRemoveRow, onRemoveR
       </div>
       
       <div className="grid">
-        {grid.map((row, rowIndex) => (
-          <div key={`row-${rowIndex}`} className="grid-row">
-            {row.map((cell, colIndex) => (
-              <GridCell
-                key={cell.id}
-                cell={cell}
-                onClick={() => onCellClick(rowIndex, colIndex)}
-                preloadedData={preloadedData}
-              />
-            ))}
-          </div>
-        ))}
+        {grid.map((row, rowIndex) => {
+          // Создаем уникальный ключ для строки на основе ID всех ячеек в строке
+          const rowKey = row.map(cell => cell.id).join('-');
+          
+          return (
+            <div key={rowKey} className="grid-row">
+              {row.map((cell, colIndex) => (
+                <GridCell
+                  key={cell.id}
+                  cell={cell}
+                  onClick={() => onCellClick(rowIndex, colIndex)}
+                  preloadedData={preloadedData}
+                  animationTrigger={animationTrigger}
+                />
+              ))}
+            </div>
+          );
+        })}
       </div>
       
       <div className="row-buttons row-buttons-bottom">
