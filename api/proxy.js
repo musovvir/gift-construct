@@ -12,52 +12,46 @@ export default async function handler(req, res) {
 
   try {
     const { url } = req.query;
-    
+
     if (!url) {
       return res.status(400).json({ error: 'URL parameter is required' });
     }
 
-    // Делаем запрос к целевому API
-    const response = await fetch(url, {
+    const decodedUrl = decodeURIComponent(url);
+
+    // Делаем запрос к целевому API или CDN
+    const response = await fetch(decodedUrl, {
       method: req.method,
       headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
+        'Accept': '*/*',
         'User-Agent': 'Mozilla/5.0 (compatible; Vercel-Proxy/1.0)',
       },
     });
 
     if (!response.ok) {
-      return res.status(response.status).json({ 
+      return res.status(response.status).json({
         error: 'Failed to fetch data',
         status: response.status,
         statusText: response.statusText
       });
     }
 
-    // Определяем тип контента
-    const contentType = response.headers.get('content-type');
-    
-    if (contentType && contentType.includes('application/json')) {
+    const contentType = response.headers.get('content-type') || 'application/octet-stream';
+    res.setHeader('Content-Type', contentType);
+
+    if (contentType.includes('application/json')) {
       const data = await response.json();
       res.status(200).json(data);
-    } else if (contentType && contentType.includes('image/')) {
-      // Для изображений возвращаем blob
-      const buffer = await response.arrayBuffer();
-      res.setHeader('Content-Type', contentType);
-      res.setHeader('Content-Length', buffer.byteLength);
-      res.status(200).send(Buffer.from(buffer));
     } else {
-      // Для других типов контента
-      const text = await response.text();
-      res.setHeader('Content-Type', contentType || 'text/plain');
-      res.status(200).send(text);
+      const buffer = await response.arrayBuffer();
+      res.status(200).send(Buffer.from(buffer));
     }
+
   } catch (error) {
     console.error('Proxy error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Internal server error',
-      message: error.message 
+      message: error.message
     });
   }
 }
