@@ -3,9 +3,9 @@ import axios from 'axios';
 // Определяем базовый URL для API
 // В dev режиме можно использовать либо внешний proxy-server (порт 3001), либо встроенный Vite proxy
 const USE_EXTERNAL_PROXY = import.meta.env.VITE_USE_EXTERNAL_PROXY === 'true';
-const API_BASE = import.meta.env.DEV 
+const API_BASE = import.meta.env.DEV
   ? (USE_EXTERNAL_PROXY ? 'http://localhost:3001' : '')
-  : '/api/proxy?url=' + encodeURIComponent('https://api.changes.tg');
+  : '';
 
 // Создаем экземпляр axios с базовой конфигурацией
 const api = axios.create({
