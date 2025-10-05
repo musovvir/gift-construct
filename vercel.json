@@ -1,0 +1,7 @@
+{
+    "rewrites": [
+      { "source": "/api/(.*)", "destination": "/api/proxy?url=https://api.changes.tg/$1" },
+      { "source": "/cdn/(.*)", "destination": "/api/proxy?url=https://cdn.changes.tg/$1" }
+    ]
+  }
+  
