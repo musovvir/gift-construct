@@ -12,13 +12,24 @@ export default async function handler(req, res) {
 
   try {
     const { url } = req.query;
+
+    let decodedUrl = decodeURIComponent(url);
+
+    if (decodedUrl.startsWith('https:/') && !decodedUrl.startsWith('https://')) {
+      decodedUrl = decodedUrl.replace('https:/', 'https://');
+    }
+
+    if (decodedUrl.startsWith('http:/') && !decodedUrl.startsWith('http://')) {
+      decodedUrl = decodedUrl.replace('http:/', 'http://');
+    }
+
     
     if (!url) {
       return res.status(400).json({ error: 'URL parameter is required' });
     }
 
     // Делаем запрос к целевому API
-    const response = await fetch(url, {
+    const response = await fetch(decodedUrl, {
       method: req.method,
       headers: {
         'Accept': 'application/json',
