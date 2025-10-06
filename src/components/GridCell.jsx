@@ -203,11 +203,10 @@ const GridCell = ({ cell, onClick, preloadedData, animationTrigger }) => {
           <span className="placeholder-icon">+</span>
         </div>
       )}
+      {/* Риббон — показывается только если есть ribbonText */}
       {cell.ribbonText && (
-        <div className="cell-ribbon" aria-hidden="true">
-          <div className="ribbon-bar">
-            <span>{cell.ribbonText}</span>
-          </div>
+        <div className="gift-ribbon">
+          <div className="gift-ribbon-inner">{cell.ribbonText}</div>
         </div>
       )}
     </div>

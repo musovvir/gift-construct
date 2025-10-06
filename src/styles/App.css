@@ -232,51 +232,50 @@ body {
   appearance: none !important;
 }
 
-/* Контейнер ленты — совпадает с официальным (.AmQSvxpZ) */
-.cell-ribbon {
+.gift-ribbon {
   position: absolute;
-  top: -0.125rem;
-  right: -0.125rem;
+  top: 0;
+  right: 0;
   width: 3.5rem;
   height: 3.5rem;
-  pointer-events: none;
-  z-index: 6;
-  overflow: visible;
-}
-
-/* Полоса, проходящая по диагонали квадрата, центрируется и поворачивается */
-.cell-ribbon .ribbon-bar {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  /* ширина = 3.5rem * sqrt(2) ≈ 4.95rem — используем calc для точности */
-  width: calc(3.5rem * 1.4142);
-  transform: translate(-50%, -50%) rotate(45deg);
-  background: rgba(20, 25, 35, 0.95); /* тёмный фон, можно заменить на #1e2a40 */
-  color: #ffffff;
-  font-size: 0.675rem; /* примерно 10.8px при root 16px, подгони при необходимости */
-  font-weight: 600;
-  line-height: 1;
-  text-align: center;
-  padding: 0.14rem 0; /* вертикальные отступы, подрегулируй если надо */
-  border-radius: 3px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
   pointer-events: none;
+  z-index: 3;
 }
 
-/* Немного подвинем текст, если он слишком плотный */
-.cell-ribbon .ribbon-bar > span {
-  display: inline-block;
-  padding: 0 0.25rem;
+.gift-ribbon-inner {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 150%;
+  height: 1.2rem;
+  background-color: #1a2233; /* тёмно-синий фон */
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: 600;
+  transform: rotate(45deg);
+  top: 0.4rem;
+  right: -1.1rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.25);
 }
 
-/* Для маленьких экранов уменьшаем размеры (опционально) */
-@media (max-width: 480px) {
-  .cell-ribbon { width: 3rem; height: 3rem; top: -0.125rem; right: -0.125rem; }
-  .cell-ribbon .ribbon-bar { width: calc(3rem * 1.4142); font-size: 0.6rem; }
+.gift-ribbon-inner::before,
+.gift-ribbon-inner::after {
+  content: "";
+  position: absolute;
+  bottom: -0.2rem;
+  border: 0.4rem solid transparent;
+}
+
+.gift-ribbon-inner::before {
+  left: 0;
+  border-top-color: #1a2233;
+}
+
+.gift-ribbon-inner::after {
+  right: 0;
+  border-top-color: #1a2233;
 }
 
 /* Убираем все эффекты при клике */
