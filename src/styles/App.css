@@ -232,23 +232,51 @@ body {
   appearance: none !important;
 }
 
-/* Ленточка в правом верхнем углу */
+/* Контейнер ленты — совпадает с официальным (.AmQSvxpZ) */
 .cell-ribbon {
   position: absolute;
-  top: 8px;
-  right: -35px;
-  background: rgba(20, 25, 35, 0.9);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 2px 0;
-  width: 100px;
-  text-align: center;
-  transform: rotate(45deg);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  z-index: 5;
+  top: -0.125rem;
+  right: -0.125rem;
+  width: 3.5rem;
+  height: 3.5rem;
   pointer-events: none;
-  border-radius: 2px;
+  z-index: 6;
+  overflow: visible;
+}
+
+/* Полоса, проходящая по диагонали квадрата, центрируется и поворачивается */
+.cell-ribbon .ribbon-bar {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* ширина = 3.5rem * sqrt(2) ≈ 4.95rem — используем calc для точности */
+  width: calc(3.5rem * 1.4142);
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: rgba(20, 25, 35, 0.95); /* тёмный фон, можно заменить на #1e2a40 */
+  color: #ffffff;
+  font-size: 0.675rem; /* примерно 10.8px при root 16px, подгони при необходимости */
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  padding: 0.14rem 0; /* вертикальные отступы, подрегулируй если надо */
+  border-radius: 3px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+/* Немного подвинем текст, если он слишком плотный */
+.cell-ribbon .ribbon-bar > span {
+  display: inline-block;
+  padding: 0 0.25rem;
+}
+
+/* Для маленьких экранов уменьшаем размеры (опционально) */
+@media (max-width: 480px) {
+  .cell-ribbon { width: 3rem; height: 3rem; top: -0.125rem; right: -0.125rem; }
+  .cell-ribbon .ribbon-bar { width: calc(3rem * 1.4142); font-size: 0.6rem; }
 }
 
 /* Убираем все эффекты при клике */

@@ -204,8 +204,10 @@ const GridCell = ({ cell, onClick, preloadedData, animationTrigger }) => {
         </div>
       )}
       {cell.ribbonText && (
-        <div className="cell-ribbon">
-          {cell.ribbonText}
+        <div className="cell-ribbon" aria-hidden="true">
+          <div className="ribbon-bar">
+            <span>{cell.ribbonText}</span>
+          </div>
         </div>
       )}
     </div>
