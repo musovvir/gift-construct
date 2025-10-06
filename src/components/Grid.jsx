@@ -1,8 +1,27 @@
 import GridCell from './GridCell';
 
-const Grid = ({ grid, onCellClick, onAddRow, onAddRowTop, onRemoveRow, onRemoveRowTop, preloadedData, animationTrigger }) => {
+// Функция для форматирования числа с разделением тысяч (1 из 33.553)
+const formatNumber = (num) => num.toLocaleString('ru-RU');
+
+// Генерация случайного числа в диапазоне (от 3000 до 90000)
+const getRandomTotal = () => {
+  const num = Math.floor(Math.random() * (90000 - 3000 + 1)) + 3000;
+  return formatNumber(num);
+};
+
+const Grid = ({
+  grid,
+  onCellClick,
+  onAddRow,
+  onAddRowTop,
+  onRemoveRow,
+  onRemoveRowTop,
+  preloadedData,
+  animationTrigger
+}) => {
   return (
     <div className="grid-container">
+      {/* Верхние кнопки */}
       <div className="row-buttons row-buttons-top">
         <button 
           key="add-row-top"
@@ -28,28 +47,34 @@ const Grid = ({ grid, onCellClick, onAddRow, onAddRowTop, onRemoveRow, onRemoveR
           Удалить ряд
         </button>
       </div>
-      
+
+      {/* Сетка */}
       <div className="grid">
         {grid.map((row, rowIndex) => {
-          // Создаем уникальный ключ для строки на основе ID всех ячеек в строке
           const rowKey = row.map(cell => cell.id).join('-');
-          
+
           return (
             <div key={rowKey} className="grid-row">
-              {row.map((cell, colIndex) => (
-                <GridCell
-                  key={cell.id}
-                  cell={cell}
-                  onClick={() => onCellClick(rowIndex, colIndex)}
-                  preloadedData={preloadedData}
-                  animationTrigger={animationTrigger}
-                />
-              ))}
+              {row.map((cell, colIndex) => {
+                // Добавляем случайный ribbonText, если его нет
+                const ribbonText = cell.ribbonText || `1 из ${getRandomTotal()}`;
+
+                return (
+                  <GridCell
+                    key={cell.id}
+                    cell={{ ...cell, ribbonText }}
+                    onClick={() => onCellClick(rowIndex, colIndex)}
+                    preloadedData={preloadedData}
+                    animationTrigger={animationTrigger}
+                  />
+                );
+              })}
             </div>
           );
         })}
       </div>
-      
+
+      {/* Нижние кнопки */}
       <div className="row-buttons row-buttons-bottom">
         <button 
           key="add-row-bottom"

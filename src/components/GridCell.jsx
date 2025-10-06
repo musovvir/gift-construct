@@ -203,6 +203,11 @@ const GridCell = ({ cell, onClick, preloadedData, animationTrigger }) => {
           <span className="placeholder-icon">+</span>
         </div>
       )}
+      {cell.ribbonText && (
+        <div className="cell-ribbon">
+          {cell.ribbonText}
+        </div>
+      )}
     </div>
   );
 };
