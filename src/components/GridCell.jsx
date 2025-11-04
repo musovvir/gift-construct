@@ -13,7 +13,25 @@ import {
   numberToHex 
 } from '../utils/patternUtils.jsx';
 
-const GridCell = ({ cell, onClick, preloadedData, animationTrigger }) => {
+const GridCell = ({ 
+  cell, 
+  onClick, 
+  preloadedData, 
+  animationTrigger,
+  // Drag and drop handlers (desktop)
+  onDragStart,
+  onDragEnd,
+  onDragEnter,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  // Touch handlers (mobile)
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd,
+  isDragged,
+  isDragOver
+}) => {
   const containerRef = useRef(null);
   const lottieRef = useRef(null);
   const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
@@ -156,14 +174,88 @@ const GridCell = ({ cell, onClick, preloadedData, animationTrigger }) => {
     return '#000000';
   };
 
+  // === Drag and Drop handlers ===
+  const handleDragStartInternal = (e) => {
+    // Разрешаем drag только для заполненных ячеек
+    if (cell.isEmpty || !onDragStart) return;
+    e.stopPropagation();
+    onDragStart(e, cell.id);
+  };
+
+  const handleDragEndInternal = (e) => {
+    if (!onDragEnd) return;
+    e.stopPropagation();
+    onDragEnd(e);
+  };
+
+  const handleDragEnterInternal = (e) => {
+    if (!onDragEnter) return;
+    e.stopPropagation();
+    onDragEnter(e, cell.id);
+  };
+
+  const handleDragOverInternal = (e) => {
+    if (!onDragOver) return;
+    e.stopPropagation();
+    onDragOver(e);
+  };
+
+  const handleDragLeaveInternal = (e) => {
+    if (!onDragLeave) return;
+    e.stopPropagation();
+    onDragLeave(e);
+  };
+
+  const handleDropInternal = (e) => {
+    if (!onDrop) return;
+    e.stopPropagation();
+    onDrop(e, cell.id);
+  };
+
   // === Render ===
+  const cellClassName = [
+    'grid-cell',
+    cell.isEmpty ? 'empty' : 'filled',
+    isDragged ? 'dragging' : '',
+    isDragOver ? 'drag-over' : ''
+  ].filter(Boolean).join(' ');
+
+  // === Touch handlers (mobile) ===
+  const handleTouchStartInternal = (e) => {
+    if (cell.isEmpty || !onTouchStart) return;
+    e.stopPropagation();
+    onTouchStart(e, cell.id);
+  };
+
+  const handleTouchMoveInternal = (e) => {
+    if (!onTouchMove) return;
+    onTouchMove(e);
+  };
+
+  const handleTouchEndInternal = (e) => {
+    if (!onTouchEnd) return;
+    e.stopPropagation();
+    onTouchEnd(e);
+  };
+
   return (
     <div
-      className={`grid-cell ${cell.isEmpty ? 'empty' : 'filled'}`}
-      style={getCellStyles()}
+      className={cellClassName}
+      data-cell-id={cell.id}
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      draggable={!cell.isEmpty}
+      onDragStart={handleDragStartInternal}
+      onDragEnd={handleDragEndInternal}
+      onDragEnter={handleDragEnterInternal}
+      onDragOver={handleDragOverInternal}
+      onDragLeave={handleDragLeaveInternal}
+      onDrop={handleDropInternal}
+      onTouchStart={handleTouchStartInternal}
+      onTouchMove={handleTouchMoveInternal}
+      onTouchEnd={handleTouchEndInternal}
+      style={getCellStyles()}
     >
       {/* Паттерн */}
       {cell.pattern && (

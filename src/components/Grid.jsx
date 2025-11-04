@@ -22,7 +22,9 @@ const Grid = ({
   onRemoveRow,
   onRemoveRowTop,
   preloadedData,
-  animationTrigger
+  animationTrigger,
+  // Drag and drop handlers
+  dragHandlers = null
 }) => {
   return (
     <div className="grid-container">
@@ -71,6 +73,22 @@ const Grid = ({
                   onClick={() => onCellClick(rowIndex, colIndex)}
                   preloadedData={preloadedData}
                   animationTrigger={animationTrigger}
+                  {...(dragHandlers ? {
+                    // Desktop handlers
+                    onDragStart: dragHandlers.handleDragStart,
+                    onDragEnd: dragHandlers.handleDragEnd,
+                    onDragEnter: dragHandlers.handleDragEnter,
+                    onDragOver: dragHandlers.handleDragOver,
+                    onDragLeave: dragHandlers.handleDragLeave,
+                    onDrop: dragHandlers.handleDrop,
+                    // Mobile handlers
+                    onTouchStart: dragHandlers.handleTouchStart,
+                    onTouchMove: dragHandlers.handleTouchMove,
+                    onTouchEnd: dragHandlers.handleTouchEnd,
+                    // States
+                    isDragged: dragHandlers.draggedCellId === cell.id,
+                    isDragOver: dragHandlers.dragOverCellId === cell.id
+                  } : {})}
                 />
               ))}
             </div>

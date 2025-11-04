@@ -230,6 +230,14 @@ body {
   -webkit-appearance: none !important;
   -moz-appearance: none !important;
   appearance: none !important;
+  /* Для мобильных устройств: предотвращаем стандартные жесты на заполненных ячейках */
+  -webkit-touch-callout: none;
+}
+
+.grid-cell.filled {
+  /* Отключаем стандартные touch-жесты для заполненных ячеек (zoom, scroll) */
+  touch-action: none;
+  -ms-touch-action: none;
 }
 
 .gift-ribbon {
@@ -321,6 +329,30 @@ body {
 .grid-cell.filled {
   /* Убираем стили border, так как border убран */
   cursor: pointer;
+}
+
+/* Drag and Drop стили */
+.grid-cell.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+  transform: scale(0.95);
+  z-index: 1000;
+}
+
+.grid-cell.drag-over {
+  outline: 2px solid var(--tg-theme-button-color);
+  outline-offset: -2px;
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(51, 144, 236, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.grid-cell.filled:not(.dragging) {
+  cursor: grab;
+}
+
+.grid-cell.filled:active:not(.dragging) {
+  cursor: grabbing;
 }
 
 /* Контейнеры внутри ячейки */

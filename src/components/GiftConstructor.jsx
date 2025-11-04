@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Grid from './Grid';
 import Modal from './Modal';
 import LoadingSpinner from './LoadingSpinner';
 import { usePreloadData } from '../hooks/useApi';
+import { useDragAndDrop } from '../hooks/useDragAndDrop';
 
 // Глобальный счетчик для создания уникальных ID
 let cellIdCounter = 0;
@@ -36,7 +37,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
   const animationTimeoutRef = useRef(null);
 
   // Функция для запуска анимации на всех ячейках с throttling
-  const triggerGridAnimation = () => {
+  const triggerGridAnimation = useCallback(() => {
     // Отменяем предыдущий таймер если он есть
     if (animationTimeoutRef.current) {
       clearTimeout(animationTimeoutRef.current);
@@ -46,7 +47,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
     animationTimeoutRef.current = setTimeout(() => {
       setAnimationTrigger(prev => prev + 1);
     }, 50);
-  };
+  }, []);
 
   // Очистка таймера при размонтировании
   useEffect(() => {
@@ -94,6 +95,66 @@ const GiftConstructor = ({ telegramWebApp }) => {
     
     return null;
   };
+
+  // Обработчик перестановки ячеек через drag and drop
+  const handleCellSwap = useCallback((sourceCellId, targetCellId) => {
+    if (!sourceCellId || !targetCellId || sourceCellId === targetCellId) return;
+
+    setGrid(prevGrid => {
+      let sourceCell = null;
+      let targetCell = null;
+      let sourceRowIndex = -1;
+      let sourceColIndex = -1;
+      let targetRowIndex = -1;
+      let targetColIndex = -1;
+
+      // Находим обе ячейки
+      for (let r = 0; r < prevGrid.length; r++) {
+        for (let c = 0; c < prevGrid[r].length; c++) {
+          if (prevGrid[r][c].id === sourceCellId) {
+            sourceCell = { ...prevGrid[r][c] };
+            sourceRowIndex = r;
+            sourceColIndex = c;
+          }
+          if (prevGrid[r][c].id === targetCellId) {
+            targetCell = { ...prevGrid[r][c] };
+            targetRowIndex = r;
+            targetColIndex = c;
+          }
+        }
+      }
+
+      if (!sourceCell || !targetCell) return prevGrid;
+
+      // Создаем новую сетку с переставленными ячейками
+      const newGrid = prevGrid.map((row, rowIndex) =>
+        row.map((cell, colIndex) => {
+          if (rowIndex === sourceRowIndex && colIndex === sourceColIndex) {
+            // Заменяем исходную ячейку на целевую
+            return { ...targetCell };
+          }
+          if (rowIndex === targetRowIndex && colIndex === targetColIndex) {
+            // Заменяем целевую ячейку на исходную
+            return { ...sourceCell };
+          }
+          return cell;
+        })
+      );
+
+      return newGrid;
+    });
+
+    // Обратная связь для Telegram WebApp
+    if (telegramWebApp) {
+      telegramWebApp.HapticFeedback?.impactOccurred('medium');
+    }
+
+    // Запускаем анимацию на всех ячейках
+    triggerGridAnimation();
+  }, [telegramWebApp, triggerGridAnimation]);
+
+  // Используем хук для drag and drop
+  const dragHandlers = useDragAndDrop(handleCellSwap);
 
   // Обработчик применения изменений в модальном окне (без закрытия)
   const handleApplyChanges = (cellData) => {
@@ -300,6 +361,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
         onRemoveRowTop={handleRemoveRowTop}
         preloadedData={preloadedData}
         animationTrigger={animationTrigger}
+        dragHandlers={dragHandlers}
       />
 
       {modalOpen && selectedCell && (
