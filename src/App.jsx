@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { CopyPasteProvider } from './contexts/CopyPasteContext';
 import GiftConstructor from './components/GiftConstructor';
 import ThemeToggle from './components/ThemeToggle';
 import './styles/App.css';
@@ -39,7 +40,8 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <div className="app">
+        <CopyPasteProvider>
+          <div className="app">
           <header className="app-header">
             <h1>For my dear «Midnight Blue» community from{' '}
               <a
@@ -80,7 +82,8 @@ function App() {
               </a>
             </p>
           </footer>
-        </div>
+          </div>
+        </CopyPasteProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

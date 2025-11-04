@@ -606,9 +606,40 @@ body {
   transition: all 0.2s ease;
 }
 
-.copy-btn:hover {
+.copy-btn:hover:not(:disabled) {
   background: var(--tg-theme-secondary-bg-color);
   color: var(--tg-theme-text-color);
+}
+
+.copy-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.paste-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--tg-theme-hint-color);
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.paste-btn:hover:not(:disabled) {
+  background: var(--tg-theme-secondary-bg-color);
+  color: var(--tg-theme-text-color);
+}
+
+.paste-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .close-btn {

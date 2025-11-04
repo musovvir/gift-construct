@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import SearchableSelect from './SearchableSelect';
+import { useCopyPaste } from '../contexts/CopyPasteContext';
 import {
   useBackdropsForGift,
   useModelsForGift,
@@ -7,7 +8,8 @@ import {
   useOriginalLottie
 } from '../hooks/useApi';
 
-const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, preloadedData, isPreloading, previousCell }) => {
+const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPreloading }) => {
+  const { copyCellData, getCopiedData, hasCopiedData } = useCopyPaste();
   const [formData, setFormData] = useState({
     gift: '',
     model: '',
@@ -48,11 +50,8 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
   const giftModels = Array.isArray(giftModelsRaw) ? giftModelsRaw : [];
   const giftPatterns = Array.isArray(giftPatternsRaw) ? giftPatternsRaw : [];
 
-  // Загружаем Original.json при выборе подарка
-  const { 
-    data: originalLottie, 
-    isLoading: isOriginalLoading 
-  } = useOriginalLottie(formData.gift);
+  // Загружаем Original.json при выборе подарка (для будущего использования)
+  useOriginalLottie(formData.gift);
 
 
   // Сбрасываем зависимые поля при изменении подарка (только при ручном выборе)
@@ -114,24 +113,46 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
     onReset();
   };
 
-  // Обработчик копирования из предыдущей ячейки
-  const handleCopyFromPrevious = () => {
-    if (!previousCell) return;
-    
-    const copiedData = {
-      gift: previousCell.gift || '',
-      model: previousCell.model || '',
-      backdrop: previousCell.backdrop || '',
-      pattern: previousCell.pattern || '',
+  // Обработчик копирования текущей ячейки
+  const handleCopy = () => {
+    const currentData = {
+      gift: formData.gift || '',
+      model: formData.model || '',
+      backdrop: formData.backdrop || '',
+      pattern: formData.pattern || '',
     };
     
-    // Обновляем formData
-    setFormData(copiedData);
+    // Копируем только если есть хотя бы подарок
+    if (currentData.gift) {
+      copyCellData(currentData);
+      // Обратная связь (можно добавить уведомление)
+      console.log('Ячейка скопирована');
+    }
+  };
+
+  // Обработчик вставки скопированных данных
+  const handlePaste = () => {
+    const copiedData = getCopiedData();
+    if (!copiedData || !copiedData.gift) {
+      return;
+    }
     
-    // Применяем изменения к ячейке через handleInputChange для корректной обработки
-    if (copiedData.model) {
-      // Применяем все данные сразу, как если бы пользователь их ввел
-      onApply(copiedData);
+    // Обновляем formData скопированными данными
+    setFormData({
+      gift: copiedData.gift || '',
+      model: copiedData.model || '',
+      backdrop: copiedData.backdrop || '',
+      pattern: copiedData.pattern || '',
+    });
+    
+    // Применяем изменения к ячейке
+    if (copiedData.gift) {
+      onApply({
+        gift: copiedData.gift || '',
+        model: copiedData.model || '',
+        backdrop: copiedData.backdrop || '',
+        pattern: copiedData.pattern || '',
+      });
     }
   };
 
@@ -153,16 +174,30 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
         <div className="modal-header">
           <h2>Настройка ячейки</h2>
           <div className="modal-header-actions">
-            {previousCell && (
-              <button 
-                className="copy-btn"
-                onClick={handleCopyFromPrevious}
-                aria-label="Скопировать из предыдущей ячейки"
-                title="Скопировать из предыдущей ячейки"
-              >
-                📄
-              </button>
-            )}
+            <button 
+              className="copy-btn"
+              onClick={handleCopy}
+              aria-label="Скопировать текущую ячейку"
+              title="Скопировать текущую ячейку"
+              disabled={!formData.gift}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+            <button 
+              className="paste-btn"
+              onClick={handlePaste}
+              aria-label="Вставить скопированную ячейку"
+              title="Вставить скопированную ячейку"
+              disabled={!hasCopiedData()}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+              </svg>
+            </button>
             <button 
               className="close-btn"
               onClick={onClose}

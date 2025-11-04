@@ -308,11 +308,9 @@ const GiftConstructor = ({ telegramWebApp }) => {
           cell={selectedCell}
           onClose={handleCloseModal}
           onApply={handleApplyChanges}
-          onApplyAndClose={handleCloseModalWithApply}
           onReset={handleResetCell}
           preloadedData={preloadedData}
           isPreloading={isLoading}
-          previousCell={getPreviousCell()}
         />
       )}
     </div>
