@@ -15,14 +15,17 @@ const SearchableSelect = ({
   const selectRef = useRef(null);
   const searchInputRef = useRef(null);
 
+  // Убеждаемся, что options - это массив
+  const safeOptions = Array.isArray(options) ? options : [];
+
   // Фильтруем опции по поисковому запросу
   const filteredOptions = useMemo(() => {
-    if (!searchTerm) return options;
+    if (!searchTerm) return safeOptions;
     
-    return options.filter(option => 
-      option.toLowerCase().includes(searchTerm.toLowerCase())
+    return safeOptions.filter(option => 
+      String(option).toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [options, searchTerm]);
+  }, [safeOptions, searchTerm]);
 
   // Закрываем селект при клике вне его
   useEffect(() => {
@@ -66,7 +69,7 @@ const SearchableSelect = ({
   };
 
   // Находим выбранную опцию для отображения
-  const selectedOption = options.find(option => option === value);
+  const selectedOption = safeOptions.find(option => option === value);
 
   return (
     <div 

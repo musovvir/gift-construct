@@ -41,14 +41,14 @@ export const apiService = {
   async getGifts() {
     return getCachedData('gifts', async () => {
       const response = await api.get('/gifts');
-      return response.data;
+      return Array.isArray(response.data) ? response.data : [];
     });
   },
 
   async getBackdrops() {
     return getCachedData('backdrops', async () => {
       const response = await api.get('/backdrops?sort=asc');
-      return response.data;
+      return Array.isArray(response.data) ? response.data : [];
     });
   },
 
@@ -79,9 +79,10 @@ export const apiService = {
   async getBackdropsForGift(giftName) {
     return getCachedData(`backdrops-${giftName}`, async () => {
       const response = await api.get(`/backdrops/${encodeURIComponent(giftName)}`);
-      return Array.isArray(response.data) 
-        ? response.data.map(item => typeof item === 'string' ? item : item.name || item)
-        : response.data;
+      if (!Array.isArray(response.data)) {
+        return [];
+      }
+      return response.data.map(item => typeof item === 'string' ? item : item.name || item);
     });
   },
 
@@ -95,18 +96,20 @@ export const apiService = {
   async getModelsForGift(giftName) {
     return getCachedData(`models-${giftName}`, async () => {
       const response = await api.get(`/models/${encodeURIComponent(giftName)}`);
-      return Array.isArray(response.data) 
-        ? response.data.map(item => typeof item === 'string' ? item : item.name || item)
-        : response.data;
+      if (!Array.isArray(response.data)) {
+        return [];
+      }
+      return response.data.map(item => typeof item === 'string' ? item : item.name || item);
     });
   },
 
   async getPatternsForGift(giftName) {
     return getCachedData(`patterns-${giftName}`, async () => {
       const response = await api.get(`/patterns/${encodeURIComponent(giftName)}`);
-      return Array.isArray(response.data) 
-        ? response.data.map(item => typeof item === 'string' ? item : item.name || item)
-        : response.data;
+      if (!Array.isArray(response.data)) {
+        return [];
+      }
+      return response.data.map(item => typeof item === 'string' ? item : item.name || item);
     });
   },
 

@@ -29,19 +29,24 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
 
   // Загружаем данные для выбранного подарка с помощью React Query
   const { 
-    data: giftBackdrops = [], 
+    data: giftBackdropsRaw, 
     isLoading: isBackdropsLoading 
   } = useBackdropsForGift(formData.gift);
 
   const { 
-    data: giftModels = [], 
+    data: giftModelsRaw, 
     isLoading: isModelsLoading 
   } = useModelsForGift(formData.gift);
 
   const { 
-    data: giftPatterns = [], 
+    data: giftPatternsRaw, 
     isLoading: isPatternsLoading 
   } = usePatternsForGift(formData.gift);
+
+  // Убеждаемся, что данные - это массивы
+  const giftBackdrops = Array.isArray(giftBackdropsRaw) ? giftBackdropsRaw : [];
+  const giftModels = Array.isArray(giftModelsRaw) ? giftModelsRaw : [];
+  const giftPatterns = Array.isArray(giftPatternsRaw) ? giftPatternsRaw : [];
 
   // Загружаем Original.json при выборе подарка
   const { 
@@ -138,7 +143,7 @@ const Modal = ({ isOpen, cell, onClose, onApply, onApplyAndClose, onReset, prelo
   };
 
   // Получаем список подарков из предзагруженных данных
-  const gifts = preloadedData?.gifts || [];
+  const gifts = Array.isArray(preloadedData?.gifts) ? preloadedData.gifts : [];
 
   if (!isOpen) return null;
 
