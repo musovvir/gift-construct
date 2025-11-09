@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { 
   useLottieModel, 
   usePatternImage, 
@@ -17,26 +18,29 @@ const GridCell = ({
   cell, 
   onClick, 
   preloadedData, 
-  animationTrigger,
-  // Drag and drop handlers (desktop)
-  onDragStart,
-  onDragEnd,
-  onDragEnter,
-  onDragOver,
-  onDragLeave,
-  onDrop,
-  // Touch handlers (mobile)
-  onTouchStart,
-  onTouchMove,
-  onTouchEnd,
-  isDragged,
-  isDragOver
+  animationTrigger
 }) => {
   const containerRef = useRef(null);
   const lottieRef = useRef(null);
   const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
   const [_, setIsHovered] = useState(false);
   const lastAnimationTime = useRef(0);
+
+  // === Drag and Drop с @dnd-kit/core ===
+  const { attributes, listeners, setNodeRef: setDraggableRef, transform, isDragging } = useDraggable({
+    id: cell.id,
+    disabled: cell.isEmpty, // Отключаем drag для пустых ячеек
+  });
+
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    id: cell.id,
+  });
+
+  // Объединяем refs для draggable и droppable
+  const setRefs = useCallback((node) => {
+    setDraggableRef(node);
+    setDroppableRef(node);
+  }, [setDraggableRef, setDroppableRef]);
 
   // === API-загрузки ===
   const lottieModelResult = useLottieModel(cell.gift, cell.model);
@@ -48,6 +52,31 @@ const GridCell = ({
   const { data: backdropDetails } = useBackdropDetailsForGift(cell.gift);
 
   const allBackdropDetails = preloadedData?.backdrops || backdropDetails;
+
+  // === Вычисление ribbonText на основе реальных данных ===
+  const getRibbonText = () => {
+    if (!cell.gift || !cell.backdrop) return null;
+    
+    // Если ribbonText уже установлен, используем его
+    if (cell.ribbonText) return cell.ribbonText;
+    
+    // Ищем backdrop details для текущего подарка
+    if (!backdropDetails || !Array.isArray(backdropDetails)) return '1 из ???';
+    
+    const currentBackdrop = backdropDetails.find(item => item.name === cell.backdrop);
+    
+    if (!currentBackdrop?.rarityPermille || currentBackdrop.rarityPermille <= 0) {
+      return '1 из ???';
+    }
+    
+    // rarityPermille = 10 означает 10/1000 = 1%, то есть 1 из 100
+    const outOf = Math.round(1000 / currentBackdrop.rarityPermille);
+    const formattedNumber = outOf.toLocaleString('en-US');
+    
+    return `1 из ${formattedNumber}`;
+  };
+
+  const ribbonText = getRibbonText();
 
   // === Управление анимацией ===
 
@@ -70,7 +99,9 @@ const GridCell = ({
       if (lottieRef.current) {
         try {
           lottieRef.current.destroy();
-        } catch (_) {}
+        } catch {
+          // Игнорируем ошибки
+        }
         lottieRef.current = null;
       }
 
@@ -91,7 +122,8 @@ const GridCell = ({
             lottieRef.current.goToAndStop(0, true);
           }
         });
-      } catch (_) {
+      } catch {
+        // Ошибка при загрузке анимации, сбрасываем ref
         lottieRef.current = null;
       }
     }
@@ -127,7 +159,9 @@ const GridCell = ({
       if (lottieRef.current) {
         try {
           lottieRef.current.destroy();
-        } catch (_) {}
+        } catch {
+          // Игнорируем ошибки при cleanup
+        }
         lottieRef.current = null;
       }
     };
@@ -174,88 +208,31 @@ const GridCell = ({
     return '#000000';
   };
 
-  // === Drag and Drop handlers ===
-  const handleDragStartInternal = (e) => {
-    // Разрешаем drag только для заполненных ячеек
-    if (cell.isEmpty || !onDragStart) return;
-    e.stopPropagation();
-    onDragStart(e, cell.id);
-  };
-
-  const handleDragEndInternal = (e) => {
-    if (!onDragEnd) return;
-    e.stopPropagation();
-    onDragEnd(e);
-  };
-
-  const handleDragEnterInternal = (e) => {
-    if (!onDragEnter) return;
-    e.stopPropagation();
-    onDragEnter(e, cell.id);
-  };
-
-  const handleDragOverInternal = (e) => {
-    if (!onDragOver) return;
-    e.stopPropagation();
-    onDragOver(e);
-  };
-
-  const handleDragLeaveInternal = (e) => {
-    if (!onDragLeave) return;
-    e.stopPropagation();
-    onDragLeave(e);
-  };
-
-  const handleDropInternal = (e) => {
-    if (!onDrop) return;
-    e.stopPropagation();
-    onDrop(e, cell.id);
-  };
+  // === Стили для drag and drop ===
+  const dragStyle = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    transition: isDragging ? 'none' : undefined,
+  } : undefined;
 
   // === Render ===
   const cellClassName = [
     'grid-cell',
     cell.isEmpty ? 'empty' : 'filled',
-    isDragged ? 'dragging' : '',
-    isDragOver ? 'drag-over' : ''
+    isDragging ? 'dragging' : '',
+    isOver ? 'drag-over' : ''
   ].filter(Boolean).join(' ');
-
-  // === Touch handlers (mobile) ===
-  const handleTouchStartInternal = (e) => {
-    if (cell.isEmpty || !onTouchStart) return;
-    e.stopPropagation();
-    onTouchStart(e, cell.id);
-  };
-
-  const handleTouchMoveInternal = (e) => {
-    if (!onTouchMove) return;
-    onTouchMove(e);
-  };
-
-  const handleTouchEndInternal = (e) => {
-    if (!onTouchEnd) return;
-    e.stopPropagation();
-    onTouchEnd(e);
-  };
 
   return (
     <div
+      ref={setRefs}
       className={cellClassName}
       data-cell-id={cell.id}
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      draggable={!cell.isEmpty}
-      onDragStart={handleDragStartInternal}
-      onDragEnd={handleDragEndInternal}
-      onDragEnter={handleDragEnterInternal}
-      onDragOver={handleDragOverInternal}
-      onDragLeave={handleDragLeaveInternal}
-      onDrop={handleDropInternal}
-      onTouchStart={handleTouchStartInternal}
-      onTouchMove={handleTouchMoveInternal}
-      onTouchEnd={handleTouchEndInternal}
-      style={getCellStyles()}
+      style={{ ...getCellStyles(), ...dragStyle }}
+      {...listeners}
+      {...attributes}
     >
       {/* Паттерн */}
       {cell.pattern && (
@@ -296,9 +273,9 @@ const GridCell = ({
         </div>
       )}
       {/* Риббон — показывается только если есть ribbonText */}
-      {cell.ribbonText && (
+      {ribbonText && (
         <div className="gift-ribbon">
-          <div className="gift-ribbon-inner">{cell.ribbonText}</div>
+          <div className="gift-ribbon-inner">{ribbonText}</div>
         </div>
       )}
     </div>

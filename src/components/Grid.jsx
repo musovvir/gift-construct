@@ -1,19 +1,5 @@
 import GridCell from './GridCell';
 
-const formatRandomRibbonText = () => {
-  // Рандомное число от 3_000 до 90_000
-  const randomNumber = Math.floor(Math.random() * (90000 - 3000 + 1)) + 3000;
-
-  // Форматируем в стиль "70.444K"
-  const formatted = (randomNumber / 1000)
-    .toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
-
-  // Редко, но можно добавить немного разнообразия — например "2 из" или "3 из"
-  const firstPart = Math.random() < 0.1 ? 2 : Math.random() < 0.05 ? 3 : 1;
-
-  return `${firstPart} из ${formatted}K`;
-};
-
 const Grid = ({
   grid,
   onCellClick,
@@ -22,9 +8,7 @@ const Grid = ({
   onRemoveRow,
   onRemoveRowTop,
   preloadedData,
-  animationTrigger,
-  // Drag and drop handlers
-  dragHandlers = null
+  animationTrigger
 }) => {
   return (
     <div className="grid-container">
@@ -65,30 +49,10 @@ const Grid = ({
               {row.map((cell, colIndex) => (
                 <GridCell
                   key={cell.id}
-                  cell={{
-                    ...cell,
-                    // Добавляем ленту только если есть gift
-                    ribbonText: cell.gift ? (cell.ribbonText ?? formatRandomRibbonText()) : undefined,
-                  }}
+                  cell={cell}
                   onClick={() => onCellClick(rowIndex, colIndex)}
                   preloadedData={preloadedData}
                   animationTrigger={animationTrigger}
-                  {...(dragHandlers ? {
-                    // Desktop handlers
-                    onDragStart: dragHandlers.handleDragStart,
-                    onDragEnd: dragHandlers.handleDragEnd,
-                    onDragEnter: dragHandlers.handleDragEnter,
-                    onDragOver: dragHandlers.handleDragOver,
-                    onDragLeave: dragHandlers.handleDragLeave,
-                    onDrop: dragHandlers.handleDrop,
-                    // Mobile handlers
-                    onTouchStart: dragHandlers.handleTouchStart,
-                    onTouchMove: dragHandlers.handleTouchMove,
-                    onTouchEnd: dragHandlers.handleTouchEnd,
-                    // States
-                    isDragged: dragHandlers.draggedCellId === cell.id,
-                    isDragOver: dragHandlers.dragOverCellId === cell.id
-                  } : {})}
                 />
               ))}
             </div>

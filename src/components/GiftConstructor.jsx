@@ -3,7 +3,7 @@ import Grid from './Grid';
 import Modal from './Modal';
 import LoadingSpinner from './LoadingSpinner';
 import { usePreloadData } from '../hooks/useApi';
-import { useDragAndDrop } from '../hooks/useDragAndDrop';
+import { DndContext, DragOverlay, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 
 // Глобальный счетчик для создания уникальных ID
 let cellIdCounter = 0;
@@ -96,9 +96,51 @@ const GiftConstructor = ({ telegramWebApp }) => {
     return null;
   };
 
-  // Обработчик перестановки ячеек через drag and drop
-  const handleCellSwap = useCallback((sourceCellId, targetCellId) => {
-    if (!sourceCellId || !targetCellId || sourceCellId === targetCellId) return;
+  // Настраиваем sensors для поддержки мыши и тача
+  const mouseSensor = useSensor(MouseSensor, {
+    // Минимальная дистанция для начала drag (предотвращает случайные drag при клике)
+    activationConstraint: {
+      distance: 10,
+    },
+  });
+  
+  const touchSensor = useSensor(TouchSensor, {
+    // Задержка перед началом drag на мобильных
+    activationConstraint: {
+      delay: 100,
+      tolerance: 5,
+    },
+  });
+
+  const sensors = useSensors(mouseSensor, touchSensor);
+
+  const [activeDragCell, setActiveDragCell] = useState(null);
+
+  // Обработчик начала перетаскивания
+  const handleDragStart = useCallback((event) => {
+    const { active } = event;
+    const cellId = active.id;
+    
+    // Находим перетаскиваемую ячейку
+    for (let r = 0; r < grid.length; r++) {
+      for (let c = 0; c < grid[r].length; c++) {
+        if (grid[r][c].id === cellId) {
+          setActiveDragCell(grid[r][c]);
+          break;
+        }
+      }
+    }
+  }, [grid]);
+
+  // Обработчик окончания перетаскивания
+  const handleDragEnd = useCallback((event) => {
+    const { active, over } = event;
+    setActiveDragCell(null);
+
+    if (!over || active.id === over.id) return;
+
+    const sourceCellId = active.id;
+    const targetCellId = over.id;
 
     setGrid(prevGrid => {
       let sourceCell = null;
@@ -153,15 +195,12 @@ const GiftConstructor = ({ telegramWebApp }) => {
     triggerGridAnimation();
   }, [telegramWebApp, triggerGridAnimation]);
 
-  // Используем хук для drag and drop
-  const dragHandlers = useDragAndDrop(handleCellSwap);
-
   // Обработчик применения изменений в модальном окне (без закрытия)
   const handleApplyChanges = (cellData) => {
     if (!selectedCell) return;
 
-    const newGrid = grid.map((row, rowIndex) =>
-      row.map((cell, colIndex) => {
+    const newGrid = grid.map((row) =>
+      row.map((cell) => {
         if (cell.id === selectedCell.id) {
           return {
             ...cell,
@@ -352,17 +391,35 @@ const GiftConstructor = ({ telegramWebApp }) => {
 
   return (
     <div className="gift-constructor">
-      <Grid
-        grid={grid}
-        onCellClick={handleCellClick}
-        onAddRow={handleAddRow}
-        onAddRowTop={handleAddRowTop}
-        onRemoveRow={handleRemoveRow}
-        onRemoveRowTop={handleRemoveRowTop}
-        preloadedData={preloadedData}
-        animationTrigger={animationTrigger}
-        dragHandlers={dragHandlers}
-      />
+      <DndContext 
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <Grid
+          grid={grid}
+          onCellClick={handleCellClick}
+          onAddRow={handleAddRow}
+          onAddRowTop={handleAddRowTop}
+          onRemoveRow={handleRemoveRow}
+          onRemoveRowTop={handleRemoveRowTop}
+          preloadedData={preloadedData}
+          animationTrigger={animationTrigger}
+        />
+        
+        <DragOverlay>
+          {activeDragCell && (
+            <div style={{
+              width: '100px',
+              height: '100px',
+              opacity: 0.8,
+              cursor: 'grabbing'
+            }}>
+              {/* Можно добавить превью перетаскиваемой ячейки */}
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
 
       {modalOpen && selectedCell && (
         <Modal
