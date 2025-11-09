@@ -49,20 +49,32 @@ export const useDragAndDrop = (onDrop) => {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', cellId);
   
-    const dragImage = document.createElement('div');
-    dragImage.style.position = 'absolute';
-    dragImage.style.top = '-1000px';
-    dragImage.style.width = '1px';
-    dragImage.style.height = '1px';
-    dragImage.style.opacity = '0';
-    document.body.appendChild(dragImage);
+    // Найдём сам элемент ячейки
+    const cellElement = e.currentTarget.closest('.grid-cell');
+    if (!cellElement) return;
   
-    e.dataTransfer.setDragImage(dragImage, 0, 0);
+    // Создаём клон для превью
+    const clone = cellElement.cloneNode(true);
+    clone.style.position = 'absolute';
+    clone.style.top = '-1000px';
+    clone.style.left = '-1000px';
+    clone.style.width = `${cellElement.offsetWidth}px`;
+    clone.style.height = `${cellElement.offsetHeight}px`;
+    clone.style.transform = 'scale(1)'; // чтобы не уменьшался
+    clone.style.opacity = '1';
+    clone.style.zIndex = '9999';
+    document.body.appendChild(clone);
   
+    // Устанавливаем превью
+    e.dataTransfer.setDragImage(clone, clone.offsetWidth / 2, clone.offsetHeight / 2);
+  
+    // Удаляем клон после кадра (иначе "следы")
     requestAnimationFrame(() => {
-      document.body.removeChild(dragImage);
+      document.body.removeChild(clone);
     });
   }, []);
+  
+  
   
 
   /**
