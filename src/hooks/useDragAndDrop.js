@@ -43,22 +43,27 @@ export const useDragAndDrop = (onDrop) => {
    * Обработчик начала перетаскивания (desktop)
    */
   const handleDragStart = useCallback((e, cellId) => {
-    // Сохраняем время начала для предотвращения случайных drag при клике
     dragStartTime.current = Date.now();
     setDraggedCellId(cellId);
-    
-    // Устанавливаем данные для передачи
+  
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', cellId);
-    
-    // Используем пустое изображение для кастомного курсора
+  
     const dragImage = document.createElement('div');
     dragImage.style.position = 'absolute';
     dragImage.style.top = '-1000px';
+    dragImage.style.width = '1px';
+    dragImage.style.height = '1px';
+    dragImage.style.opacity = '0';
     document.body.appendChild(dragImage);
+  
     e.dataTransfer.setDragImage(dragImage, 0, 0);
-    setTimeout(() => document.body.removeChild(dragImage), 0);
+  
+    requestAnimationFrame(() => {
+      document.body.removeChild(dragImage);
+    });
   }, []);
+  
 
   /**
    * Обработчик окончания перетаскивания (desktop)
