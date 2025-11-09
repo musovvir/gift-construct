@@ -12,6 +12,7 @@ export const useDragAndDrop = (onDrop) => {
   const dragStartTime = useRef(0);
   const touchStartPos = useRef(null);
   const touchCurrentCell = useRef(null);
+  const dragImageRef = useRef(null);
   const minDragDistance = 10; // Минимальное расстояние для начала drag (px)
 
   /**
@@ -43,56 +44,97 @@ export const useDragAndDrop = (onDrop) => {
    * Обработчик начала перетаскивания (desktop)
    */
   const handleDragStart = useCallback((e, cellId) => {
+    // Сохраняем время и состояние
     dragStartTime.current = Date.now();
     setDraggedCellId(cellId);
   
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', cellId);
   
-    // Найдём сам элемент ячейки
-    const cellElement = e.currentTarget.closest('.grid-cell');
-    if (!cellElement) return;
+    // Попробуем сделать клон превью — находим сам элемент ячейки
+    // e.currentTarget должен быть элементом с onDragStart (grid-cell)
+    const cellElement = e.currentTarget && (e.currentTarget.closest ? e.currentTarget.closest('.grid-cell') : null);
+    // fallback: если вдруг currentTarget не задан, используем find по event.target
+    const fallbackEl = !cellElement ? findCellElement(e.target) : null;
+    const baseEl = cellElement || fallbackEl;
   
-    // Создаём клон для превью
-    const clone = cellElement.cloneNode(true);
+    if (!baseEl) {
+      // если не нашли — используем невидимый маленький элемент (гарантия отсутствия следов)
+      const dummy = document.createElement('div');
+      dummy.style.position = 'absolute';
+      dummy.style.top = '-10000px';
+      dummy.style.left = '-10000px';
+      dummy.style.width = '1px';
+      dummy.style.height = '1px';
+      dummy.style.opacity = '0';
+      document.body.appendChild(dummy);
+      e.dataTransfer.setDragImage(dummy, 0, 0);
+      dragImageRef.current = dummy;
+      return;
+    }
+  
+    // Создаём клон
+    const clone = baseEl.cloneNode(true);
     clone.style.position = 'absolute';
-    clone.style.top = '-1000px';
-    clone.style.left = '-1000px';
-    clone.style.width = `${cellElement.offsetWidth}px`;
-    clone.style.height = `${cellElement.offsetHeight}px`;
-    clone.style.transform = 'scale(1)'; // чтобы не уменьшался
-    clone.style.opacity = '1';
+    clone.style.top = '-10000px';
+    clone.style.left = '-10000px';
+    // установим явные размеры, чтобы превью было предсказуемым
+    clone.style.width = `${baseEl.offsetWidth}px`;
+    clone.style.height = `${baseEl.offsetHeight}px`;
+    clone.style.pointerEvents = 'none';
+    clone.style.margin = '0';
+    clone.style.boxSizing = 'border-box';
+    // чтобы не влиять на визуалку, ставим высокий z-index
     clone.style.zIndex = '9999';
     document.body.appendChild(clone);
   
-    // Устанавливаем превью
-    e.dataTransfer.setDragImage(clone, clone.offsetWidth / 2, clone.offsetHeight / 2);
-  
-    // Удаляем клон после кадра (иначе "следы")
-    requestAnimationFrame(() => {
-      document.body.removeChild(clone);
-    });
+    try {
+      // Центрируем точку захвата
+      e.dataTransfer.setDragImage(clone, Math.round(clone.offsetWidth / 2), Math.round(clone.offsetHeight / 2));
+      // Сохраняем клон в реф — удалим его при dragend
+      dragImageRef.current = clone;
+    } catch (err) {
+      // Если что-то пошло не так, оставим dummy (минимальный элемент)
+      if (clone && clone.parentNode) clone.parentNode.removeChild(clone);
+      const dummy = document.createElement('div');
+      dummy.style.position = 'absolute';
+      dummy.style.top = '-10000px';
+      dummy.style.left = '-10000px';
+      dummy.style.width = '1px';
+      dummy.style.height = '1px';
+      dummy.style.opacity = '0';
+      document.body.appendChild(dummy);
+      e.dataTransfer.setDragImage(dummy, 0, 0);
+      dragImageRef.current = dummy;
+    }
   }, []);
-  
-  
   
 
   /**
    * Обработчик окончания перетаскивания (desktop)
    */
   const handleDragEnd = useCallback((e) => {
-    // Проверяем, что прошло достаточно времени для реального drag
     const dragDuration = Date.now() - dragStartTime.current;
     if (dragDuration < 50) {
-      // Слишком быстро - вероятно случайный drag, игнорируем
       setDraggedCellId(null);
       setDragOverCellId(null);
+      // удалим клон, если есть
+      if (dragImageRef.current && dragImageRef.current.parentNode) {
+        dragImageRef.current.parentNode.removeChild(dragImageRef.current);
+        dragImageRef.current = null;
+      }
       return;
     }
-
+  
     setDraggedCellId(null);
     setDragOverCellId(null);
+  
+    if (dragImageRef.current && dragImageRef.current.parentNode) {
+      dragImageRef.current.parentNode.removeChild(dragImageRef.current);
+      dragImageRef.current = null;
+    }
   }, []);
+  
 
   /**
    * Обработчик входа в зону drop (desktop)
