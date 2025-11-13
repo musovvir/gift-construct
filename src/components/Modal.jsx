@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import SearchableSelect from './SearchableSelect';
 import { useCopyPaste } from '../contexts/CopyPasteContext';
 import {
@@ -46,12 +46,45 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
   } = usePatternsForGift(formData.gift);
 
   // Убеждаемся, что данные - это массивы
-  const giftBackdrops = Array.isArray(giftBackdropsRaw) ? giftBackdropsRaw : [];
-  const giftModels = Array.isArray(giftModelsRaw) ? giftModelsRaw : [];
-  const giftPatterns = Array.isArray(giftPatternsRaw) ? giftPatternsRaw : [];
+  const giftBackdrops = useMemo(() => 
+    Array.isArray(giftBackdropsRaw) ? giftBackdropsRaw : [], 
+    [giftBackdropsRaw]
+  );
+  const giftModels = useMemo(() => 
+    Array.isArray(giftModelsRaw) ? giftModelsRaw : [], 
+    [giftModelsRaw]
+  );
+  const giftPatterns = useMemo(() => 
+    Array.isArray(giftPatternsRaw) ? giftPatternsRaw : [], 
+    [giftPatternsRaw]
+  );
 
   // Загружаем Original.json при выборе подарка (для будущего использования)
   useOriginalLottie(formData.gift);
+
+  // Автоматически выбираем первый паттерн/узор из списка при загрузке данных
+  useEffect(() => {
+    // Проверяем, что:
+    // 1. Есть выбранный подарок
+    // 2. Загрузка завершена
+    // 3. Есть паттерны в списке
+    // 4. Паттерн еще не выбран или текущий паттерн не в списке
+    if (formData.gift && !isPatternsLoading && giftPatterns.length > 0) {
+      const currentPatternExists = giftPatterns.includes(formData.pattern);
+      if (!formData.pattern || !currentPatternExists) {
+        const firstPattern = giftPatterns[0];
+        setFormData(prev => {
+          const newData = {
+            ...prev,
+            pattern: firstPattern,
+          };
+          // Применяем изменения с первым паттерном
+          onApply(newData);
+          return newData;
+        });
+      }
+    }
+  }, [formData.gift, formData.pattern, isPatternsLoading, giftPatterns, onApply]);
 
 
   // Сбрасываем зависимые поля при изменении подарка (только при ручном выборе)
@@ -68,8 +101,7 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
         }));
       }
     }
-  }, [formData.gift, cell.gift]);
-
+  }, [formData.gift, formData.model, formData.backdrop, formData.pattern, cell.gift]);
   // Обработчик изменения формы - применяем изменения только когда есть модель
   const handleInputChange = (field, value) => {
     const newFormData = {
@@ -167,7 +199,6 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
   const gifts = Array.isArray(preloadedData?.gifts) ? preloadedData.gifts : [];
 
   if (!isOpen) return null;
-
   return (
     <div className="modal-overlay" onClick={handleBackdropClick}>
       <div className="modal-content">
@@ -253,7 +284,6 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
               isLoading={formData.gift && isBackdropsLoading}
             />
           </div>
-
           {/* Выбор узора */}
           <div className="form-group">
             <label htmlFor="pattern-select">Узор</label>

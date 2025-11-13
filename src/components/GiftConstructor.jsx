@@ -8,9 +8,26 @@ import { DndContext, DragOverlay, MouseSensor, TouchSensor, useSensor, useSensor
 // Глобальный счетчик для создания уникальных ID
 let cellIdCounter = 0;
 
+// Ключ для сохранения в localStorage
+const GRID_STORAGE_KEY = 'giftConstructorGrid';
+const COUNTER_STORAGE_KEY = 'giftConstructorCounter';
+
 const GiftConstructor = ({ telegramWebApp }) => {
   const [grid, setGrid] = useState(() => {
-    // Создаем начальную сетку 3x3
+    // Пытаемся загрузить сохраненную сетку из localStorage
+    try {
+      const savedGrid = localStorage.getItem(GRID_STORAGE_KEY);
+      const savedCounter = localStorage.getItem(COUNTER_STORAGE_KEY);
+      
+      if (savedGrid && savedCounter) {
+        cellIdCounter = parseInt(savedCounter, 10);
+        return JSON.parse(savedGrid);
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки сохраненной сетки:', error);
+    }
+    
+    // Создаем начальную сетку 3x3, если нет сохраненной
     const initialGrid = [];
     for (let i = 0; i < 3; i++) {
       const row = [];
@@ -72,30 +89,6 @@ const GiftConstructor = ({ telegramWebApp }) => {
     setModalOpen(true);
   };
 
-  // Находим предыдущую ячейку с данными
-  const getPreviousCell = () => {
-    if (!selectedCell) return null;
-    
-    const { rowIndex, colIndex } = selectedCell;
-    
-    // Ищем предыдущую ячейку (слева направо, сверху вниз)
-    for (let r = 0; r < grid.length; r++) {
-      for (let c = 0; c < grid[r].length; c++) {
-        // Пропускаем текущую ячейку и пустые ячейки
-        if ((r === rowIndex && c === colIndex) || grid[r][c].isEmpty) {
-          continue;
-        }
-        
-        // Если ячейка имеет данные, возвращаем её
-        if (grid[r][c].gift) {
-          return grid[r][c];
-        }
-      }
-    }
-    
-    return null;
-  };
-
   // Настраиваем sensors для поддержки мыши и тача
   const mouseSensor = useSensor(MouseSensor, {
     // Минимальная дистанция для начала drag (предотвращает случайные drag при клике)
@@ -115,7 +108,6 @@ const GiftConstructor = ({ telegramWebApp }) => {
   const sensors = useSensors(mouseSensor, touchSensor);
 
   const [activeDragCell, setActiveDragCell] = useState(null);
-
   // Обработчик начала перетаскивания
   const handleDragStart = useCallback((event) => {
     const { active } = event;
@@ -259,7 +251,6 @@ const GiftConstructor = ({ telegramWebApp }) => {
       telegramWebApp.HapticFeedback?.impactOccurred('medium');
     }
   };
-
   // Добавление нового ряда снизу
   const handleAddRow = () => {
     const newRowIndex = grid.length;
@@ -358,6 +349,99 @@ const GiftConstructor = ({ telegramWebApp }) => {
     setSelectedCell(null);
   };
 
+  // Сохранение сетки в localStorage
+  const handleSaveGrid = () => {
+    try {
+      localStorage.setItem(GRID_STORAGE_KEY, JSON.stringify(grid));
+      localStorage.setItem(COUNTER_STORAGE_KEY, cellIdCounter.toString());
+      
+      // Обратная связь для Telegram WebApp
+      if (telegramWebApp) {
+        telegramWebApp.HapticFeedback?.notificationOccurred('success');
+        telegramWebApp.showPopup({
+          title: 'Успешно',
+          message: 'Сетка сохранена и будет доступна после перезагрузки',
+          buttons: [{ type: 'ok' }]
+        });
+      } else {
+        alert('Сетка успешно сохранена!');
+      }
+    } catch (error) {
+      console.error('Ошибка сохранения сетки:', error);
+      if (telegramWebApp) {
+        telegramWebApp.HapticFeedback?.notificationOccurred('error');
+        telegramWebApp.showPopup({
+          title: 'Ошибка',
+          message: 'Не удалось сохранить сетку',
+          buttons: [{ type: 'ok' }]
+        });
+      } else {
+        alert('Ошибка сохранения сетки');
+      }
+    }
+  };
+
+  // Полный сброс сетки
+  const handleFullReset = () => {
+    const confirmReset = () => {
+      // Очищаем localStorage
+      try {
+        localStorage.removeItem(GRID_STORAGE_KEY);
+        localStorage.removeItem(COUNTER_STORAGE_KEY);
+      } catch (error) {
+        console.error('Ошибка очистки localStorage:', error);
+      }
+
+      // Сбрасываем счетчик
+      cellIdCounter = 0;
+      // Создаем новую начальную сетку 3x3
+      const initialGrid = [];
+      for (let i = 0; i < 3; i++) {
+        const row = [];
+        for (let j = 0; j < 3; j++) {
+          row.push({
+            id: `cell-${++cellIdCounter}`,
+            row: i,
+            col: j,
+            gift: null,
+            model: null,
+            backdrop: null,
+            pattern: null,
+            isEmpty: true,
+          });
+        }
+        initialGrid.push(row);
+      }
+
+      setGrid(initialGrid);
+
+      // Обратная связь для Telegram WebApp
+      if (telegramWebApp) {
+        telegramWebApp.HapticFeedback?.notificationOccurred('success');
+      }
+    };
+
+    // Показываем подтверждение
+    if (telegramWebApp) {
+      telegramWebApp.showPopup({
+        title: 'Подтверждение',
+        message: 'Вы уверены, что хотите сбросить всю сетку? Это действие нельзя отменить.',
+        buttons: [
+          { id: 'cancel', type: 'cancel' },
+          { id: 'reset', type: 'destructive', text: 'Сбросить' }
+        ]
+      }, (buttonId) => {
+        if (buttonId === 'reset') {
+          confirmReset();
+        }
+      });
+    } else {
+      if (window.confirm('Вы уверены, что хотите сбросить всю сетку? Это действие нельзя отменить.')) {
+        confirmReset();
+      }
+    }
+  };
+
   // Показываем экран загрузки во время предзагрузки
   if (isLoading) {
     return (
@@ -403,6 +487,8 @@ const GiftConstructor = ({ telegramWebApp }) => {
           onAddRowTop={handleAddRowTop}
           onRemoveRow={handleRemoveRow}
           onRemoveRowTop={handleRemoveRowTop}
+          onSave={handleSaveGrid}
+          onFullReset={handleFullReset}
           preloadedData={preloadedData}
           animationTrigger={animationTrigger}
         />

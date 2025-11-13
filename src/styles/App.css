@@ -1221,3 +1221,91 @@ body {
 .searchable-select.loading .select-display {
   opacity: 0.8;
 }
+
+/* Кнопки сохранения и сброса */
+.save-reset-buttons {
+  display: flex !important;
+  gap: 8px !important;
+  margin: 16px 12px 20px 12px !important;
+  width: calc(100% - 24px) !important;
+  box-sizing: border-box !important;
+  user-select: none !important;
+}
+
+.action-btn {
+  padding: 14px 20px !important;
+  border: 2px solid transparent !important;
+  border-radius: 12px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  box-sizing: border-box !important;
+  outline: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  user-select: none !important;
+  min-width: 0 !important;
+}
+
+/* Кнопка сохранения */
+.save-btn {
+  background: var(--success-color) !important;
+  color: white !important;
+  border-color: var(--success-color) !important;
+}
+
+.save-btn:hover {
+  background: #42a142 !important;
+  border-color: #42a142 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 16px rgba(75, 179, 75, 0.4) !important;
+}
+
+.save-btn:active,
+.save-btn:focus:active {
+  background: #3a8f3a !important;
+  border-color: #3a8f3a !important;
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 8px rgba(75, 179, 75, 0.4) !important;
+  outline: none !important;
+}
+
+/* Кнопка сброса */
+.reset-btn {
+  background: var(--error-color) !important;
+  color: white !important;
+  border-color: var(--error-color) !important;
+}
+
+.reset-btn:hover {
+  background: #d13636 !important;
+  border-color: #d13636 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 16px rgba(229, 62, 62, 0.4) !important;
+}
+
+.reset-btn:active,
+.reset-btn:focus:active {
+  background: #c03030 !important;
+  border-color: #c03030 !important;
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.4) !important;
+  outline: none !important;
+}
+
+/* Общие стили фокуса для action-btn */
+.action-btn:focus {
+  outline: none !important;
+}
+
+.action-btn:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(51, 144, 236, 0.2) !important;
+}
