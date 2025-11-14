@@ -89,6 +89,30 @@ const GiftConstructor = ({ telegramWebApp }) => {
     setModalOpen(true);
   };
 
+  // Находим предыдущую ячейку с данными
+  const getPreviousCell = () => {
+    if (!selectedCell) return null;
+    
+    const { rowIndex, colIndex } = selectedCell;
+    
+    // Ищем предыдущую ячейку (слева направо, сверху вниз)
+    for (let r = 0; r < grid.length; r++) {
+      for (let c = 0; c < grid[r].length; c++) {
+        // Пропускаем текущую ячейку и пустые ячейки
+        if ((r === rowIndex && c === colIndex) || grid[r][c].isEmpty) {
+          continue;
+        }
+        
+        // Если ячейка имеет данные, возвращаем её
+        if (grid[r][c].gift) {
+          return grid[r][c];
+        }
+      }
+    }
+    
+    return null;
+  };
+
   // Настраиваем sensors для поддержки мыши и тача
   const mouseSensor = useSensor(MouseSensor, {
     // Минимальная дистанция для начала drag (предотвращает случайные drag при клике)
@@ -108,6 +132,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
   const sensors = useSensors(mouseSensor, touchSensor);
 
   const [activeDragCell, setActiveDragCell] = useState(null);
+
   // Обработчик начала перетаскивания
   const handleDragStart = useCallback((event) => {
     const { active } = event;
@@ -251,6 +276,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
       telegramWebApp.HapticFeedback?.impactOccurred('medium');
     }
   };
+
   // Добавление нового ряда снизу
   const handleAddRow = () => {
     const newRowIndex = grid.length;
@@ -394,6 +420,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
 
       // Сбрасываем счетчик
       cellIdCounter = 0;
+
       // Создаем новую начальную сетку 3x3
       const initialGrid = [];
       for (let i = 0; i < 3; i++) {

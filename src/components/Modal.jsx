@@ -102,6 +102,7 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
       }
     }
   }, [formData.gift, formData.model, formData.backdrop, formData.pattern, cell.gift]);
+
   // Обработчик изменения формы - применяем изменения только когда есть модель
   const handleInputChange = (field, value) => {
     const newFormData = {
@@ -199,6 +200,7 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
   const gifts = Array.isArray(preloadedData?.gifts) ? preloadedData.gifts : [];
 
   if (!isOpen) return null;
+
   return (
     <div className="modal-overlay" onClick={handleBackdropClick}>
       <div className="modal-content">
@@ -284,6 +286,7 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
               isLoading={formData.gift && isBackdropsLoading}
             />
           </div>
+
           {/* Выбор узора */}
           <div className="form-group">
             <label htmlFor="pattern-select">Узор</label>
