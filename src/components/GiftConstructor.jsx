@@ -3,7 +3,14 @@ import Grid from './Grid';
 import Modal from './Modal';
 import LoadingSpinner from './LoadingSpinner';
 import { usePreloadData } from '../hooks/useApi';
-import { DndContext, DragOverlay, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
+import {
+  DndContext,
+  DragOverlay,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
 
 // Глобальный счетчик для создания уникальных ID
 let cellIdCounter = 0;
@@ -18,7 +25,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
     try {
       const savedGrid = localStorage.getItem(GRID_STORAGE_KEY);
       const savedCounter = localStorage.getItem(COUNTER_STORAGE_KEY);
-      
+
       if (savedGrid && savedCounter) {
         cellIdCounter = parseInt(savedCounter, 10);
         return JSON.parse(savedGrid);
@@ -26,7 +33,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
     } catch (error) {
       console.error('Ошибка загрузки сохраненной сетки:', error);
     }
-    
+
     // Создаем начальную сетку 3x3, если нет сохраненной
     const initialGrid = [];
     for (let i = 0; i < 3; i++) {
@@ -59,7 +66,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
     if (animationTimeoutRef.current) {
       clearTimeout(animationTimeoutRef.current);
     }
-    
+
     // Добавляем небольшую задержку и throttling
     animationTimeoutRef.current = setTimeout(() => {
       setAnimationTrigger(prev => prev + 1);
@@ -76,11 +83,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
   }, []);
 
   // Предзагружаем данные при запуске приложения
-  const { 
-    data: preloadedData, 
-    isLoading, 
-    error: preloadError 
-  } = usePreloadData();
+  const { data: preloadedData, isLoading, error: preloadError } = usePreloadData();
 
   // Обработчик клика на ячейку
   const handleCellClick = (rowIndex, colIndex) => {
@@ -92,9 +95,9 @@ const GiftConstructor = ({ telegramWebApp }) => {
   // Находим предыдущую ячейку с данными
   const getPreviousCell = () => {
     if (!selectedCell) return null;
-    
+
     const { rowIndex, colIndex } = selectedCell;
-    
+
     // Ищем предыдущую ячейку (слева направо, сверху вниз)
     for (let r = 0; r < grid.length; r++) {
       for (let c = 0; c < grid[r].length; c++) {
@@ -102,14 +105,14 @@ const GiftConstructor = ({ telegramWebApp }) => {
         if ((r === rowIndex && c === colIndex) || grid[r][c].isEmpty) {
           continue;
         }
-        
+
         // Если ячейка имеет данные, возвращаем её
         if (grid[r][c].gift) {
           return grid[r][c];
         }
       }
     }
-    
+
     return null;
   };
 
@@ -120,7 +123,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
       distance: 10,
     },
   });
-  
+
   const touchSensor = useSensor(TouchSensor, {
     // Задержка перед началом drag на мобильных
     activationConstraint: {
@@ -134,90 +137,96 @@ const GiftConstructor = ({ telegramWebApp }) => {
   const [activeDragCell, setActiveDragCell] = useState(null);
 
   // Обработчик начала перетаскивания
-  const handleDragStart = useCallback((event) => {
-    const { active } = event;
-    const cellId = active.id;
-    
-    // Находим перетаскиваемую ячейку
-    for (let r = 0; r < grid.length; r++) {
-      for (let c = 0; c < grid[r].length; c++) {
-        if (grid[r][c].id === cellId) {
-          setActiveDragCell(grid[r][c]);
-          break;
+  const handleDragStart = useCallback(
+    event => {
+      const { active } = event;
+      const cellId = active.id;
+
+      // Находим перетаскиваемую ячейку
+      for (let r = 0; r < grid.length; r++) {
+        for (let c = 0; c < grid[r].length; c++) {
+          if (grid[r][c].id === cellId) {
+            setActiveDragCell(grid[r][c]);
+            break;
+          }
         }
       }
-    }
-  }, [grid]);
+    },
+    [grid]
+  );
 
   // Обработчик окончания перетаскивания
-  const handleDragEnd = useCallback((event) => {
-    const { active, over } = event;
-    setActiveDragCell(null);
+  const handleDragEnd = useCallback(
+    event => {
+      const { active, over } = event;
+      setActiveDragCell(null);
 
-    if (!over || active.id === over.id) return;
+      if (!over || active.id === over.id) return;
 
-    const sourceCellId = active.id;
-    const targetCellId = over.id;
+      const sourceCellId = active.id;
+      const targetCellId = over.id;
 
-    setGrid(prevGrid => {
-      let sourceCell = null;
-      let targetCell = null;
-      let sourceRowIndex = -1;
-      let sourceColIndex = -1;
-      let targetRowIndex = -1;
-      let targetColIndex = -1;
+      setGrid(prevGrid => {
+        let sourceCell = null;
+        let targetCell = null;
+        let sourceRowIndex = -1;
+        let sourceColIndex = -1;
+        let targetRowIndex = -1;
+        let targetColIndex = -1;
 
-      // Находим обе ячейки
-      for (let r = 0; r < prevGrid.length; r++) {
-        for (let c = 0; c < prevGrid[r].length; c++) {
-          if (prevGrid[r][c].id === sourceCellId) {
-            sourceCell = { ...prevGrid[r][c] };
-            sourceRowIndex = r;
-            sourceColIndex = c;
-          }
-          if (prevGrid[r][c].id === targetCellId) {
-            targetCell = { ...prevGrid[r][c] };
-            targetRowIndex = r;
-            targetColIndex = c;
+        // Находим обе ячейки
+        for (let r = 0; r < prevGrid.length; r++) {
+          for (let c = 0; c < prevGrid[r].length; c++) {
+            if (prevGrid[r][c].id === sourceCellId) {
+              sourceCell = { ...prevGrid[r][c] };
+              sourceRowIndex = r;
+              sourceColIndex = c;
+            }
+            if (prevGrid[r][c].id === targetCellId) {
+              targetCell = { ...prevGrid[r][c] };
+              targetRowIndex = r;
+              targetColIndex = c;
+            }
           }
         }
+
+        if (!sourceCell || !targetCell) return prevGrid;
+
+        // Создаем новую сетку с переставленными ячейками
+        const newGrid = prevGrid.map((row, rowIndex) =>
+          row.map((cell, colIndex) => {
+            if (rowIndex === sourceRowIndex && colIndex === sourceColIndex) {
+              // Заменяем исходную ячейку на целевую
+              return { ...targetCell };
+            }
+            if (rowIndex === targetRowIndex && colIndex === targetColIndex) {
+              // Заменяем целевую ячейку на исходную
+              return { ...sourceCell };
+            }
+            return cell;
+          })
+        );
+
+        return newGrid;
+      });
+
+      // Обратная связь для Telegram WebApp
+      if (telegramWebApp) {
+        telegramWebApp.HapticFeedback?.impactOccurred('medium');
       }
 
-      if (!sourceCell || !targetCell) return prevGrid;
-
-      // Создаем новую сетку с переставленными ячейками
-      const newGrid = prevGrid.map((row, rowIndex) =>
-        row.map((cell, colIndex) => {
-          if (rowIndex === sourceRowIndex && colIndex === sourceColIndex) {
-            // Заменяем исходную ячейку на целевую
-            return { ...targetCell };
-          }
-          if (rowIndex === targetRowIndex && colIndex === targetColIndex) {
-            // Заменяем целевую ячейку на исходную
-            return { ...sourceCell };
-          }
-          return cell;
-        })
-      );
-
-      return newGrid;
-    });
-
-    // Обратная связь для Telegram WebApp
-    if (telegramWebApp) {
-      telegramWebApp.HapticFeedback?.impactOccurred('medium');
-    }
-
-    // Запускаем анимацию на всех ячейках
-    triggerGridAnimation();
-  }, [telegramWebApp, triggerGridAnimation]);
+      // Запускаем анимацию на всех ячейках
+      triggerGridAnimation();
+    },
+    [telegramWebApp, triggerGridAnimation]
+  );
 
   // Обработчик применения изменений в модальном окне (без закрытия)
-  const handleApplyChanges = (cellData) => {
+  const handleApplyChanges = cellData => {
     if (!selectedCell) return;
 
-    const newGrid = grid.map((row) =>
-      row.map((cell) => {
+    const newGrid = grid.map(row =>
+      row.map(cell => {
         if (cell.id === selectedCell.id) {
           return {
             ...cell,
@@ -241,7 +250,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
   };
 
   // Обработчик закрытия модалки с применением изменений
-  const handleCloseModalWithApply = (cellData) => {
+  const handleCloseModalWithApply = cellData => {
     handleApplyChanges(cellData);
     setModalOpen(false);
     setSelectedCell(null);
@@ -251,8 +260,8 @@ const GiftConstructor = ({ telegramWebApp }) => {
   const handleResetCell = () => {
     if (!selectedCell) return;
 
-    const newGrid = grid.map((row) =>
-      row.map((cell) => {
+    const newGrid = grid.map(row =>
+      row.map(cell => {
         if (cell.id === selectedCell.id) {
           return {
             ...cell,
@@ -281,7 +290,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
   const handleAddRow = () => {
     const newRowIndex = grid.length;
     const newRow = [];
-    
+
     for (let j = 0; j < 3; j++) {
       newRow.push({
         id: `cell-${++cellIdCounter}`,
@@ -296,15 +305,12 @@ const GiftConstructor = ({ telegramWebApp }) => {
     }
 
     setGrid([...grid, newRow]);
-
-    // Запускаем анимацию на всех ячейках
-    triggerGridAnimation();
   };
 
   // Добавление нового ряда сверху
   const handleAddRowTop = () => {
     const newRow = [];
-    
+
     for (let j = 0; j < 3; j++) {
       newRow.push({
         id: `cell-${++cellIdCounter}`,
@@ -328,9 +334,6 @@ const GiftConstructor = ({ telegramWebApp }) => {
 
     setGrid([newRow, ...updatedGrid]);
 
-    // Запускаем анимацию на всех ячейках
-    triggerGridAnimation();
-
     // Обратная связь для Telegram WebApp
     if (telegramWebApp) {
       telegramWebApp.HapticFeedback?.impactOccurred('medium');
@@ -344,9 +347,6 @@ const GiftConstructor = ({ telegramWebApp }) => {
     const updatedGrid = grid.slice(0, -1);
     setGrid(updatedGrid);
 
-    // Запускаем анимацию на всех ячейках
-    triggerGridAnimation();
-
     // Обратная связь для Telegram WebApp
     if (telegramWebApp) {
       telegramWebApp.HapticFeedback?.impactOccurred('medium');
@@ -359,9 +359,6 @@ const GiftConstructor = ({ telegramWebApp }) => {
 
     const updatedGrid = grid.slice(1);
     setGrid(updatedGrid);
-
-    // Запускаем анимацию на всех ячейках
-    triggerGridAnimation();
 
     // Обратная связь для Telegram WebApp
     if (telegramWebApp) {
@@ -380,14 +377,14 @@ const GiftConstructor = ({ telegramWebApp }) => {
     try {
       localStorage.setItem(GRID_STORAGE_KEY, JSON.stringify(grid));
       localStorage.setItem(COUNTER_STORAGE_KEY, cellIdCounter.toString());
-      
+
       // Обратная связь для Telegram WebApp
       if (telegramWebApp) {
         telegramWebApp.HapticFeedback?.notificationOccurred('success');
         telegramWebApp.showPopup({
           title: 'Успешно',
           message: 'Сетка сохранена и будет доступна после перезагрузки',
-          buttons: [{ type: 'ok' }]
+          buttons: [{ type: 'ok' }],
         });
       } else {
         alert('Сетка успешно сохранена!');
@@ -399,7 +396,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
         telegramWebApp.showPopup({
           title: 'Ошибка',
           message: 'Не удалось сохранить сетку',
-          buttons: [{ type: 'ok' }]
+          buttons: [{ type: 'ok' }],
         });
       } else {
         alert('Ошибка сохранения сетки');
@@ -450,20 +447,25 @@ const GiftConstructor = ({ telegramWebApp }) => {
 
     // Показываем подтверждение
     if (telegramWebApp) {
-      telegramWebApp.showPopup({
-        title: 'Подтверждение',
-        message: 'Вы уверены, что хотите сбросить всю сетку? Это действие нельзя отменить.',
-        buttons: [
-          { id: 'cancel', type: 'cancel' },
-          { id: 'reset', type: 'destructive', text: 'Сбросить' }
-        ]
-      }, (buttonId) => {
-        if (buttonId === 'reset') {
-          confirmReset();
+      telegramWebApp.showPopup(
+        {
+          title: 'Подтверждение',
+          message: 'Вы уверены, что хотите сбросить всю сетку? Это действие нельзя отменить.',
+          buttons: [
+            { id: 'cancel', type: 'cancel' },
+            { id: 'reset', type: 'destructive', text: 'Сбросить' },
+          ],
+        },
+        buttonId => {
+          if (buttonId === 'reset') {
+            confirmReset();
+          }
         }
-      });
+      );
     } else {
-      if (window.confirm('Вы уверены, что хотите сбросить всю сетку? Это действие нельзя отменить.')) {
+      if (
+        window.confirm('Вы уверены, что хотите сбросить всю сетку? Это действие нельзя отменить.')
+      ) {
         confirmReset();
       }
     }
@@ -473,10 +475,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
   if (isLoading) {
     return (
       <div className="gift-constructor">
-        <LoadingSpinner 
-          message="Идет загрузка..."
-          subMessage="Пожалуйста, подождите"
-        />
+        <LoadingSpinner message="Идет загрузка..." subMessage="Пожалуйста, подождите" />
       </div>
     );
   }
@@ -489,10 +488,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
           <div className="error-icon">❌</div>
           <h2>Ошибка загрузки</h2>
           <p>Не удалось загрузить данные приложения. Проверьте подключение к интернету.</p>
-          <button 
-            className="retry-button"
-            onClick={() => window.location.reload()}
-          >
+          <button className="retry-button" onClick={() => window.location.reload()}>
             Попробовать снова
           </button>
         </div>
@@ -502,11 +498,7 @@ const GiftConstructor = ({ telegramWebApp }) => {
 
   return (
     <div className="gift-constructor">
-      <DndContext 
-        sensors={sensors}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <Grid
           grid={grid}
           onCellClick={handleCellClick}
@@ -518,33 +510,36 @@ const GiftConstructor = ({ telegramWebApp }) => {
           onFullReset={handleFullReset}
           preloadedData={preloadedData}
           animationTrigger={animationTrigger}
+          onPlayAnimation={triggerGridAnimation}
         />
-        
+
         <DragOverlay>
           {activeDragCell && (
-            <div style={{
-              width: '100px',
-              height: '100px',
-              opacity: 0.8,
-              cursor: 'grabbing'
-            }}>
+            <div
+              style={{
+                width: '100px',
+                height: '100px',
+                opacity: 0.8,
+                cursor: 'grabbing',
+              }}>
               {/* Можно добавить превью перетаскиваемой ячейки */}
             </div>
           )}
         </DragOverlay>
       </DndContext>
 
-      {modalOpen && selectedCell && (
-        <Modal
-          isOpen={modalOpen}
-          cell={selectedCell}
-          onClose={handleCloseModal}
-          onApply={handleApplyChanges}
-          onReset={handleResetCell}
-          preloadedData={preloadedData}
-          isPreloading={isLoading}
-        />
-      )}
+      {modalOpen &&
+        selectedCell && (
+          <Modal
+            isOpen={modalOpen}
+            cell={selectedCell}
+            onClose={handleCloseModal}
+            onApply={handleApplyChanges}
+            onReset={handleResetCell}
+            preloadedData={preloadedData}
+            isPreloading={isLoading}
+          />
+        )}
     </div>
   );
 };

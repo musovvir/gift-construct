@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-const API_BASE = process.env.NODE_ENV === 'development' 
-  ? 'http://localhost:3001' 
+// В режиме разработки используем Vite прокси (/api -> https://api.changes.tg)
+// В продакшене используем Vercel serverless прокси
+const API_BASE = import.meta.env.DEV
+  ? '/api'
   : '/api/proxy?url=' + encodeURIComponent('https://api.changes.tg');
 
 // 1. Уменьшаем timeout до 5 секунд
@@ -9,7 +11,7 @@ const api = axios.create({
   baseURL: API_BASE,
   timeout: 5000, // Было 10000
   headers: {
-    'Accept': 'application/json',
+    Accept: 'application/json',
     'Content-Type': 'application/json',
   },
 });
@@ -18,7 +20,7 @@ const api = axios.create({
 const directCdnApi = axios.create({
   timeout: 5000, // Было 10000
   headers: {
-    'Accept': 'application/json',
+    Accept: 'application/json',
     'Content-Type': 'application/json',
   },
 });
@@ -27,7 +29,7 @@ const directCdnApi = axios.create({
 const productionApi = axios.create({
   timeout: 5000, // Было 10000
   headers: {
-    'Accept': 'application/json',
+    Accept: 'application/json',
     'Content-Type': 'application/json',
   },
 });
@@ -41,17 +43,17 @@ const pendingRequests = new Map();
 const getCachedData = async (key, fetcher) => {
   const now = Date.now();
   const cached = cache.get(key);
-  
+
   // Возвращаем закешированные данные
-  if (cached && (now - cached.timestamp) < CACHE_TTL) {
+  if (cached && now - cached.timestamp < CACHE_TTL) {
     return cached.data;
   }
-  
+
   // Если запрос уже выполняется, ждем его результат (debounce)
   if (pendingRequests.has(key)) {
     return pendingRequests.get(key);
   }
-  
+
   // Создаем новый запрос
   const requestPromise = fetcher()
     .then(data => {
@@ -63,19 +65,19 @@ const getCachedData = async (key, fetcher) => {
       pendingRequests.delete(key);
       throw error;
     });
-  
+
   pendingRequests.set(key, requestPromise);
   return requestPromise;
 };
 
 // 5. Попытка прямого запроса к CDN с fallback на прокси
-const fetchFromCdnWithFallback = async (cdnUrl) => {
-  if (process.env.NODE_ENV === 'development') {
-    // В dev режиме используем локальный прокси
-    const response = await api.get(`/cdn/${cdnUrl}`);
+const fetchFromCdnWithFallback = async cdnUrl => {
+  if (import.meta.env.DEV) {
+    // В dev режиме используем Vite прокси (/cdn -> https://cdn.changes.tg)
+    const response = await axios.get(`/cdn/${cdnUrl}`);
     return response.data;
   }
-  
+
   try {
     // Пытаемся запросить напрямую с CDN
     const response = await directCdnApi.get(`https://cdn.changes.tg/${cdnUrl}`);
@@ -83,26 +85,33 @@ const fetchFromCdnWithFallback = async (cdnUrl) => {
   } catch (error) {
     // Если CORS блокирует или другая ошибка - используем прокси
     console.log(`Direct CDN request failed for ${cdnUrl}, falling back to proxy`);
-    const response = await productionApi.get('/api/proxy?url=' + encodeURIComponent(`https://cdn.changes.tg/${cdnUrl}`));
+    const response = await productionApi.get(
+      '/api/proxy?url=' + encodeURIComponent(`https://cdn.changes.tg/${cdnUrl}`)
+    );
     return response.data;
   }
 };
 
-const fetchBlobFromCdnWithFallback = async (cdnUrl) => {
-  if (process.env.NODE_ENV === 'development') {
-    // В dev режиме используем локальный прокси
-    const response = await api.get(`/cdn/${cdnUrl}`, { responseType: 'blob' });
+const fetchBlobFromCdnWithFallback = async cdnUrl => {
+  if (import.meta.env.DEV) {
+    // В dev режиме используем Vite прокси (/cdn -> https://cdn.changes.tg)
+    const response = await axios.get(`/cdn/${cdnUrl}`, { responseType: 'blob' });
     return response.data;
   }
-  
+
   try {
     // Пытаемся запросить напрямую с CDN
-    const response = await directCdnApi.get(`https://cdn.changes.tg/${cdnUrl}`, { responseType: 'blob' });
+    const response = await directCdnApi.get(`https://cdn.changes.tg/${cdnUrl}`, {
+      responseType: 'blob',
+    });
     return response.data;
   } catch (error) {
     // Если CORS блокирует или другая ошибка - используем прокси
     console.log(`Direct CDN blob request failed for ${cdnUrl}, falling back to proxy`);
-    const response = await productionApi.get('/api/proxy?url=' + encodeURIComponent(`https://cdn.changes.tg/${cdnUrl}`), { responseType: 'blob' });
+    const response = await productionApi.get(
+      '/api/proxy?url=' + encodeURIComponent(`https://cdn.changes.tg/${cdnUrl}`),
+      { responseType: 'blob' }
+    );
     return response.data;
   }
 };
@@ -140,7 +149,7 @@ export const apiService = {
       if (!Array.isArray(response.data)) {
         return [];
       }
-      return response.data.map(item => typeof item === 'string' ? item : item.name || item);
+      return response.data.map(item => (typeof item === 'string' ? item : item.name || item));
     });
   },
 
@@ -157,7 +166,7 @@ export const apiService = {
       if (!Array.isArray(response.data)) {
         return [];
       }
-      return response.data.map(item => typeof item === 'string' ? item : item.name || item);
+      return response.data.map(item => (typeof item === 'string' ? item : item.name || item));
     });
   },
 
@@ -167,25 +176,31 @@ export const apiService = {
       if (!Array.isArray(response.data)) {
         return [];
       }
-      return response.data.map(item => typeof item === 'string' ? item : item.name || item);
+      return response.data.map(item => (typeof item === 'string' ? item : item.name || item));
     });
   },
 
   async getLottieModel(giftName, modelName) {
     return getCachedData(`lottie-${giftName}-${modelName}`, async () => {
-      return fetchFromCdnWithFallback(`gifts/models/${encodeURIComponent(giftName)}/lottie/${encodeURIComponent(modelName)}.json`);
+      return fetchFromCdnWithFallback(
+        `gifts/models/${encodeURIComponent(giftName)}/lottie/${encodeURIComponent(modelName)}.json`
+      );
     });
   },
 
   async getOriginalLottie(giftName) {
     return getCachedData(`original-${giftName}`, async () => {
-      return fetchFromCdnWithFallback(`gifts/models/${encodeURIComponent(giftName)}/lottie/Original.json`);
+      return fetchFromCdnWithFallback(
+        `gifts/models/${encodeURIComponent(giftName)}/lottie/Original.json`
+      );
     });
   },
 
   async getPatternImage(giftName, patternName) {
     return getCachedData(`pattern-image-${giftName}-${patternName}`, async () => {
-      const blob = await fetchBlobFromCdnWithFallback(`gifts/patterns/${encodeURIComponent(giftName)}/png/${encodeURIComponent(patternName)}.png`);
+      const blob = await fetchBlobFromCdnWithFallback(
+        `gifts/patterns/${encodeURIComponent(giftName)}/png/${encodeURIComponent(patternName)}.png`
+      );
       return URL.createObjectURL(blob);
     });
   },
@@ -195,7 +210,7 @@ export const apiService = {
       apiService.getGifts(),
       apiService.getBackdrops(),
       apiService.getIdToName(),
-      apiService.getRadarJson()
+      apiService.getRadarJson(),
     ]);
 
     return { gifts, backdrops, idToName, radarJson };
@@ -203,7 +218,7 @@ export const apiService = {
 
   clearCache() {
     cache.clear();
-  }
+  },
 };
 
 export default api;
