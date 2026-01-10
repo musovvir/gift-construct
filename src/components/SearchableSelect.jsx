@@ -8,7 +8,11 @@ const SearchableSelect = ({
   placeholder = "Выберите вариант",
   searchPlaceholder = "Поиск...",
   disabled = false,
-  isLoading = false
+  isLoading = false,
+  getOptionLabel,
+  getOptionValue,
+  renderOption,
+  renderValue
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -18,14 +22,32 @@ const SearchableSelect = ({
   // Убеждаемся, что options - это массив
   const safeOptions = Array.isArray(options) ? options : [];
 
+  const optionLabel = (option) => {
+    if (getOptionLabel) return getOptionLabel(option);
+    if (typeof option === 'string') return option;
+    if (option && typeof option === 'object') {
+      return option.label ?? option.name ?? option.value ?? String(option);
+    }
+    return String(option ?? '');
+  };
+
+  const optionValue = (option) => {
+    if (getOptionValue) return getOptionValue(option);
+    if (typeof option === 'string') return option;
+    if (option && typeof option === 'object') {
+      return option.value ?? option.name ?? option.label ?? String(option);
+    }
+    return String(option ?? '');
+  };
+
   // Фильтруем опции по поисковому запросу
   const filteredOptions = useMemo(() => {
     if (!searchTerm) return safeOptions;
     
     return safeOptions.filter(option => 
-      String(option).toLowerCase().includes(searchTerm.toLowerCase())
+      optionLabel(option).toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [safeOptions, searchTerm]);
+  }, [safeOptions, searchTerm, getOptionLabel]);
 
   // Закрываем селект при клике вне его
   useEffect(() => {
@@ -42,6 +64,15 @@ const SearchableSelect = ({
     };
   }, []);
 
+  // Если селект становится disabled/loading — закрываем и сбрасываем поиск,
+  // чтобы во время внешнего запроса ввод реально блокировался.
+  useEffect(() => {
+    if (disabled || isLoading) {
+      setIsOpen(false);
+      setSearchTerm('');
+    }
+  }, [disabled, isLoading]);
+
   // Фокусируемся на поле поиска при открытии
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
@@ -51,7 +82,7 @@ const SearchableSelect = ({
 
   // Обработчик выбора опции
   const handleOptionSelect = (option) => {
-    onChange(option);
+    onChange(optionValue(option));
     setIsOpen(false);
     setSearchTerm('');
   };
@@ -69,7 +100,7 @@ const SearchableSelect = ({
   };
 
   // Находим выбранную опцию для отображения
-  const selectedOption = safeOptions.find(option => option === value);
+  const selectedOption = safeOptions.find(option => optionValue(option) === value);
 
   return (
     <div 
@@ -91,6 +122,7 @@ const SearchableSelect = ({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder={searchPlaceholder}
+            disabled={disabled || isLoading}
           />
         </div>
       )}
@@ -98,7 +130,9 @@ const SearchableSelect = ({
       {/* Основной селект */}
       <div className="select-display" onClick={handleToggle}>
         <span className={`select-value ${!selectedOption ? 'placeholder' : ''}`}>
-          {selectedOption || placeholder}
+          {selectedOption
+            ? (renderValue ? renderValue(selectedOption) : optionLabel(selectedOption))
+            : placeholder}
         </span>
         
         <div className="select-actions">
@@ -134,11 +168,11 @@ const SearchableSelect = ({
             <div className="options-list">
               {filteredOptions.map((option, index) => (
                 <div
-                  key={`option-${option}`}
-                  className={`option ${option === value ? 'selected' : ''}`}
+                  key={`option-${id || 'select'}-${optionValue(option)}-${index}`}
+                  className={`option ${optionValue(option) === value ? 'selected' : ''}`}
                   onClick={() => handleOptionSelect(option)}
                 >
-                  {option}
+                  {renderOption ? renderOption(option) : optionLabel(option)}
                 </div>
               ))}
             </div>

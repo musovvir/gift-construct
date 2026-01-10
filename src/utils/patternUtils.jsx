@@ -51,6 +51,37 @@ export const hexToRgb = (hex) => {
   } : null;
 };
 
+// Универсальный парсер CSS-цвета (#RRGGBB или rgb/rgba) -> {r,g,b}
+export const parseColorToRgb = (color) => {
+  if (!color || typeof color !== 'string') return null;
+  const c = color.trim();
+
+  // #RRGGBB / RRGGBB
+  const hex = c.startsWith('#') ? c : `#${c}`;
+  const hexRgb = hexToRgb(hex);
+  if (hexRgb) return hexRgb;
+
+  // rgb(...) / rgba(...)
+  const m = c.match(/^rgba?\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})(?:\s*,\s*([0-9.]+))?\s*\)$/i);
+  if (!m) return null;
+  const r = Math.min(255, Math.max(0, Number(m[1])));
+  const g = Math.min(255, Math.max(0, Number(m[2])));
+  const b = Math.min(255, Math.max(0, Number(m[3])));
+  if (![r, g, b].every(Number.isFinite)) return null;
+  return { r, g, b };
+};
+
+// Сделать цвет светлее, подмешивая белый (amount: 0..1)
+export const mixWithWhite = (color, amount = 0.25) => {
+  const rgb = parseColorToRgb(color);
+  if (!rgb) return color;
+  const t = Math.min(1, Math.max(0, Number(amount)));
+  const r = Math.round(rgb.r + (255 - rgb.r) * t);
+  const g = Math.round(rgb.g + (255 - rgb.g) * t);
+  const b = Math.round(rgb.b + (255 - rgb.b) * t);
+  return `rgb(${r}, ${g}, ${b})`;
+};
+
 // Получение более темного оттенка цвета
 export const getDarkerShade = (hexColor, factor = 0.8) => {
   const rgb = hexToRgb(hexColor);

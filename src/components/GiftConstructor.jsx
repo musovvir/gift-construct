@@ -216,7 +216,6 @@ const GiftConstructor = ({ telegramWebApp }) => {
       }
 
       // Запускаем анимацию на всех ячейках
-      triggerGridAnimation();
     },
     [telegramWebApp, triggerGridAnimation]
   );

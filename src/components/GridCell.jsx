@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { 
   useLottieModel, 
   usePatternImage, 
   useBackdropDetailsForGift, 
+  useGiftSupplyForGift,
   useOriginalLottie 
 } from '../hooks/useApi';
 import { 
@@ -11,7 +12,8 @@ import {
   getDarkerShade, 
   findBackdropColor, 
   findBackdropEdgeColor, 
-  numberToHex 
+  numberToHex,
+  mixWithWhite
 } from '../utils/patternUtils.jsx';
 
 const GridCell = ({ 
@@ -22,8 +24,6 @@ const GridCell = ({
 }) => {
   const containerRef = useRef(null);
   const lottieRef = useRef(null);
-  const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
-  const [_, setIsHovered] = useState(false);
   const lastAnimationTime = useRef(0);
 
   // === Drag and Drop с @dnd-kit/core ===
@@ -53,28 +53,35 @@ const GridCell = ({
 
   const allBackdropDetails = preloadedData?.backdrops || backdropDetails;
 
-  // === Вычисление ribbonText на основе реальных данных ===
+  const normalizeKey = (s) => String(s ?? '').toLowerCase().replace(/[^a-z0-9]+/gi, '');
+
+  const formatCompact = (n) => {
+    const num = Number(n);
+    if (!Number.isFinite(num) || num <= 0) return null;
+
+    // Формат как на скрине: 14.0K / 72.7K / 1.0M (всегда 1 знак после точки для K/M)
+    if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+    if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
+    return String(Math.round(num));
+  };
+
+  // === Риббон: "количество данного подарка" ===
+  // Берём Quantity (issued/total) с публичной страницы Telegram t.me/nft/... через наш backend.
   const getRibbonText = () => {
-    if (!cell.gift || !cell.backdrop) return null;
-    
+    if (!cell.gift) return null;
+
     // Если ribbonText уже установлен, используем его
     if (cell.ribbonText) return cell.ribbonText;
-    
-    // Ищем backdrop details для текущего подарка
-    if (!backdropDetails || !Array.isArray(backdropDetails)) return '1 из ???';
-    
-    const currentBackdrop = backdropDetails.find(item => item.name === cell.backdrop);
-    
-    if (!currentBackdrop?.rarityPermille || currentBackdrop.rarityPermille <= 0) {
-      return '1 из ???';
-    }
-    
-    // rarityPermille = 10 означает 10/1000 = 1%, то есть 1 из 100
-    const outOf = Math.round(1000 / currentBackdrop.rarityPermille);
-    const formattedNumber = outOf.toLocaleString('en-US');
-    
-    return `1 из ${formattedNumber}`;
+
+    const display = formatCompact(supplyIssued) || formatCompact(supplyTotal);
+    if (!display) return '1 из ???';
+
+    return `1 из ${display}`;
   };
+
+  const { data: supplyData } = useGiftSupplyForGift(cell.gift);
+  const supplyIssued = Number(supplyData?.issued ?? supplyData?.availability_issued);
+  const supplyTotal = Number(supplyData?.total ?? supplyData?.availability_total);
 
   const ribbonText = getRibbonText();
 
@@ -87,7 +94,6 @@ const GridCell = ({
 
     if (lottieRef.current && lottieRef.current.isPaused !== false) {
       lottieRef.current.play();
-      setHasPlayedOnce(true);
       lastAnimationTime.current = now;
     }
   }, []);
@@ -116,6 +122,9 @@ const GridCell = ({
           animationData: lottieData,
         });
 
+        // Гарантируем показ первого кадра до нажатия кнопки Play
+        lottieRef.current.goToAndStop(0, true);
+
         // По завершении возвращаемся на первый кадр
         lottieRef.current.addEventListener('complete', () => {
           if (lottieRef.current) {
@@ -136,24 +145,14 @@ const GridCell = ({
     createLottieAnimation();
   }, [createLottieAnimation]);
 
-  // 2. Автозапуск один раз при первой загрузке
-  useEffect(() => {
-    if (lottieRef.current && !hasPlayedOnce) {
-      const timer = setTimeout(() => {
-        playAnimation();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [lottieData, hasPlayedOnce, playAnimation]);
-
-  // 3. Внешний триггер анимации
+  // 2. Внешний триггер анимации (только кнопкой Play)
   useEffect(() => {
     if (animationTrigger && lottieRef.current && cell.gift) {
       playAnimation();
     }
   }, [animationTrigger, cell.gift, playAnimation]);
 
-  // 4. Очистка при размонтировании
+  // 3. Очистка при размонтировании
   useEffect(() => {
     return () => {
       if (lottieRef.current) {
@@ -166,17 +165,6 @@ const GridCell = ({
       }
     };
   }, []);
-
-  // === Hover-эффекты ===
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-    playAnimation();
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-    // Не останавливаем сразу — complete сбросит сам
-  };
 
   // === Вычисления цветов ===
   const getCellStyles = () => {
@@ -199,13 +187,21 @@ const GridCell = ({
     const backdrop = allBackdropDetails.find(item => item.name === cell.backdrop);
     if (!backdrop) return '#000000';
 
-    if (backdrop.hex?.patternColor) return backdrop.hex.patternColor;
-    if (backdrop.patternColor) return numberToHex(backdrop.patternColor);
+    // Базовый цвет паттерна: из API, иначе — derived от centerColor
+    let baseColor = null;
+    if (backdrop.hex?.patternColor) baseColor = backdrop.hex.patternColor;
+    else if (backdrop.patternColor) baseColor = numberToHex(backdrop.patternColor);
 
-    const backdropColor = findBackdropColor(cell.backdrop, backdropDetails);
-    if (backdropColor) return getDarkerShade(backdropColor, 0.7);
+    if (!baseColor) {
+      const backdropColor = findBackdropColor(cell.backdrop, allBackdropDetails);
+      if (backdropColor) {
+        // Было 0.7 (слишком темно). Делаем мягче.
+        baseColor = getDarkerShade(backdropColor, 0.82);
+      }
+    }
 
-    return '#000000';
+    // Финальный тюнинг: делаем цвет чуть светлее (мягче) всегда
+    return mixWithWhite(baseColor || '#000000', 0.28);
   };
 
   // === Стили для drag and drop ===
@@ -228,8 +224,6 @@ const GridCell = ({
       className={cellClassName}
       data-cell-id={cell.id}
       onClick={onClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
       style={{ ...getCellStyles(), ...dragStyle }}
       {...listeners}
       {...attributes}
@@ -275,7 +269,27 @@ const GridCell = ({
       {/* Риббон — показывается только если есть ribbonText */}
       {ribbonText && (
         <div className="gift-ribbon">
-          <div className="gift-ribbon-inner">{ribbonText}</div>
+          <svg
+            className="gift-ribbon-bg"
+            width="56"
+            height="56"
+            viewBox="0 0 56 56"
+            fill="none"
+            aria-hidden="true"
+          >
+            <defs>
+              <linearGradient id={`gift-ribbon-gradient-${cell.id}`} x1="28" y1="1" x2="28" y2="55" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#0B4DB3" />
+                <stop offset="1" stopColor="#06224D" />
+              </linearGradient>
+            </defs>
+            {/* Плашка в верхнем‑правом углу (диагональная плашка с градиентом) */}
+            <path 
+              d="M52.4851 26.4853L29.5145 3.51472C27.2641 1.26428 24.2119 0 21.0293 0H2.82824C1.04643 0 0.154103 2.15429 1.41403 3.41422L52.5856 54.5858C53.8455 55.8457 55.9998 54.9534 55.9998 53.1716V34.9706C55.9998 31.788 54.7355 28.7357 52.4851 26.4853Z" 
+              fill={`url(#gift-ribbon-gradient-${cell.id})`} 
+            />
+          </svg>
+          <div className="gift-ribbon-text">{ribbonText}</div>
         </div>
       )}
     </div>

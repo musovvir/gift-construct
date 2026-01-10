@@ -3,10 +3,31 @@ import SearchableSelect from './SearchableSelect';
 import { useCopyPaste } from '../contexts/CopyPasteContext';
 import {
   useBackdropsForGift,
+  useBackdropDetailsForGift,
   useModelsForGift,
+  useModelDetailsForGift,
   usePatternsForGift,
   useOriginalLottie
 } from '../hooks/useApi';
+import { numberToHex } from '../utils/patternUtils.jsx';
+import { apiService } from '../services/api';
+
+const cdnUrl = (path) => (import.meta.env.DEV ? `/cdn/${path}` : `https://cdn.changes.tg/${path}`);
+const encodeSeg = (s) => encodeURIComponent(String(s ?? ''));
+const giftOriginalImageUrlById = (giftId) =>
+  cdnUrl(`gifts/originals/${encodeSeg(giftId)}/Original.png`);
+const modelImageUrl = (giftName, modelName) =>
+  cdnUrl(`gifts/models/${encodeSeg(giftName)}/png/${encodeSeg(modelName)}.png`);
+const patternThumbUrl = (giftName, patternName) =>
+  cdnUrl(`gifts/patterns/${encodeSeg(giftName)}/png/${encodeSeg(patternName)}.png`);
+
+const rarityPermilleToPercentText = (rarityPermille) => {
+  const rp = Number(rarityPermille);
+  if (!Number.isFinite(rp) || rp <= 0) return null;
+  const percent = rp / 10; // promille -> percent
+  const pretty = percent % 1 === 0 ? String(percent.toFixed(0)) : String(percent.toFixed(1));
+  return `${pretty}%`;
+};
 
 const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPreloading }) => {
   const { copyCellData, getCopiedData, hasCopiedData } = useCopyPaste();
@@ -16,6 +37,12 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
     backdrop: '',
     pattern: '',
   });
+  const [nftLink, setNftLink] = useState('');
+  const [nftResolve, setNftResolve] = useState({ status: 'idle', message: '' });
+  const isNftResolving = nftResolve.status === 'loading';
+
+  // Получаем список подарков из предзагруженных данных
+  const gifts = Array.isArray(preloadedData?.gifts) ? preloadedData.gifts : [];
 
   // Обновляем formData при открытии модалки
   useEffect(() => {
@@ -26,6 +53,8 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
         backdrop: cell.backdrop || '',
         pattern: cell.pattern || '',
       });
+      setNftLink('');
+      setNftResolve({ status: 'idle', message: '' });
     }
   }, [isOpen, cell]);
 
@@ -39,6 +68,9 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
     data: giftModelsRaw, 
     isLoading: isModelsLoading 
   } = useModelsForGift(formData.gift);
+
+  const { data: giftModelDetailsRaw } = useModelDetailsForGift(formData.gift);
+  const { data: giftBackdropDetailsRaw } = useBackdropDetailsForGift(formData.gift);
 
   const { 
     data: giftPatternsRaw, 
@@ -58,6 +90,227 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
     Array.isArray(giftPatternsRaw) ? giftPatternsRaw : [], 
     [giftPatternsRaw]
   );
+
+  const normalizeKey = (s) => String(s ?? '').toLowerCase().replace(/[^a-z0-9]+/gi, '');
+
+  const giftNameToId = useMemo(() => {
+    const m = preloadedData?.idToName;
+    if (!m || typeof m !== 'object') return {};
+    const out = {};
+    for (const [id, name] of Object.entries(m)) {
+      if (typeof name !== 'string' || !name) continue;
+      out[name] = id;
+      out[normalizeKey(name)] = id;
+    }
+    return out;
+  }, [preloadedData?.idToName]);
+
+  const giftOptions = useMemo(() => {
+    return gifts.map(g => {
+      const giftId = giftNameToId[g] || giftNameToId[normalizeKey(g)];
+      return {
+        value: g,
+        label: g,
+        imageUrl: giftId ? giftOriginalImageUrlById(giftId) : null,
+      };
+    });
+  }, [gifts, giftNameToId]);
+
+  const modelOptions = useMemo(() => {
+    const raw = Array.isArray(giftModelDetailsRaw) ? giftModelDetailsRaw : giftModels;
+    return raw
+      .map(item => {
+        if (typeof item === 'string') {
+          return {
+            value: item,
+            label: item,
+            imageUrl: formData.gift ? modelImageUrl(formData.gift, item) : null,
+          };
+        }
+        const name = item?.name ?? item?.label ?? item?.value;
+        if (!name) return null;
+        return {
+          value: name,
+          label: name,
+          rarityPermille: item?.rarityPermille ?? item?.rarity_permille ?? item?.rarity,
+          imageUrl: formData.gift ? modelImageUrl(formData.gift, name) : null,
+        };
+      })
+      .filter(Boolean);
+  }, [giftModelDetailsRaw, giftModels, formData.gift]);
+
+  const backdropOptions = useMemo(() => {
+    const details = Array.isArray(giftBackdropDetailsRaw) ? giftBackdropDetailsRaw : [];
+    // fallback на "плоский" список если деталей нет
+    if (details.length === 0) {
+      return giftBackdrops.map(name => ({ value: name, label: name }));
+    }
+    return details
+      .map(item => {
+        const name = item?.name ?? item?.label ?? item?.value;
+        if (!name) return null;
+        const center = item?.hex?.centerColor ?? (typeof item?.centerColor === 'number' ? numberToHex(item.centerColor) : null);
+        const edge = item?.hex?.edgeColor ?? (typeof item?.edgeColor === 'number' ? numberToHex(item.edgeColor) : null);
+        return {
+          value: name,
+          label: name,
+          centerColor: center,
+          edgeColor: edge,
+        };
+      })
+      .filter(Boolean);
+  }, [giftBackdropDetailsRaw, giftBackdrops]);
+
+  const patternOptions = useMemo(() => {
+    return giftPatterns.map(p => ({
+      value: p,
+      label: p,
+      imageUrl: formData.gift ? patternThumbUrl(formData.gift, p) : null,
+    }));
+  }, [giftPatterns, formData.gift]);
+
+  const resolveGiftNameFromSlug = (slugGiftPart) => {
+    if (!slugGiftPart) return null;
+    const direct = gifts.find(g => g.toLowerCase() === String(slugGiftPart).toLowerCase());
+    if (direct) return direct;
+
+    const map = preloadedData?.idToName;
+    if (map && typeof map === 'object') {
+      // вариант 1: map[slug] => "Gift Name"
+      const v = map[slugGiftPart] || map[String(slugGiftPart).toLowerCase()];
+      if (typeof v === 'string' && v) return v;
+
+      // вариант 2: ищем по нормализации в ключах/значениях
+      const slugNorm = normalizeKey(slugGiftPart);
+      for (const [k, val] of Object.entries(map)) {
+        if (normalizeKey(k) === slugNorm && typeof val === 'string') return val;
+        if (typeof val === 'string' && normalizeKey(val) === slugNorm) return val;
+      }
+    }
+
+    const slugNorm = normalizeKey(slugGiftPart);
+    return gifts.find(g => normalizeKey(g) === slugNorm) || null;
+  };
+
+  const pickName = (x) => {
+    if (!x) return null;
+    if (typeof x === 'string') return x;
+    if (typeof x === 'object') return x.name ?? x.title ?? x.value ?? x.label ?? null;
+    return null;
+  };
+
+  // Debounced resolve по ссылке t.me/nft/...
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const raw = String(nftLink || '').trim();
+    if (!raw) {
+      setNftResolve({ status: 'idle', message: '' });
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setNftResolve({ status: 'loading', message: 'Ищу NFT…' });
+
+        // Нормализуем вход: допускаем "t.me/nft/.." и "https://t.me/nft/.."
+        const cleaned = raw.replace(/^@/, '');
+        const match = cleaned.match(/(?:https?:\/\/)?(?:t\.me\/)?nft\/([^/?#]+)/i);
+        if (!match) {
+          setNftResolve({ status: 'error', message: 'Неверный формат. Нужно: t.me/nft/GiftName-123' });
+          return;
+        }
+
+        const slug = match[1].replace(/\/+$/, '');
+        const lastDash = slug.lastIndexOf('-');
+        if (lastDash <= 0) {
+          setNftResolve({ status: 'error', message: 'Неверный формат slug. Нужно: GiftName-123' });
+          return;
+        }
+        const slugGiftPart = slug.slice(0, lastDash);
+        const numPart = slug.slice(lastDash + 1);
+        if (!/^\d+$/.test(numPart)) {
+          setNftResolve({ status: 'error', message: 'Неверный номер NFT. Нужно: GiftName-123' });
+          return;
+        }
+
+        const giftName = resolveGiftNameFromSlug(slugGiftPart);
+        if (giftName) {
+          // Минимально: сразу выставим подарок, чтобы подтянулись списки
+          setFormData(prev => ({ ...prev, gift: giftName }));
+        }
+
+        const data = await apiService.resolveNftBySlug(slug, {
+          title: giftName || null,
+          model_name: formData.model || null,
+          num: Number(numPart),
+        });
+
+        // Поддержка формата вида: { gifts: [{ title, slug, num, model_name, backdrop_name, pattern_name, current_owner, ... }] }
+        const posoGift = Array.isArray(data?.gifts) && data.gifts.length > 0 ? data.gifts[0] : null;
+
+        const resolvedGift =
+          pickName(posoGift?.title) ??
+          pickName(posoGift?.gift) ??
+          pickName(data?.gift) ??
+          pickName(data?.giftName) ??
+          pickName(data?.name) ??
+          giftName;
+        const resolvedModel =
+          pickName(posoGift?.model_name) ??
+          pickName(posoGift?.model) ??
+          pickName(data?.model) ??
+          pickName(data?.attributes?.model) ??
+          pickName(data?.meta?.model) ??
+          null;
+        const resolvedBackdrop =
+          pickName(posoGift?.backdrop_name) ??
+          pickName(posoGift?.backdrop) ??
+          pickName(data?.backdrop) ??
+          pickName(data?.background) ??
+          pickName(data?.attributes?.backdrop) ??
+          null;
+        const resolvedPattern =
+          pickName(posoGift?.pattern_name) ??
+          pickName(posoGift?.pattern) ??
+          pickName(data?.pattern) ??
+          pickName(data?.attributes?.pattern) ??
+          null;
+
+        const next = {
+          gift: resolvedGift || '',
+          model: resolvedModel || '',
+          backdrop: resolvedBackdrop || '',
+          pattern: resolvedPattern || '',
+        };
+
+        // Если ничего не удалось извлечь — сообщим, но не ломаем UI
+        if (!next.gift || (!next.model && !next.backdrop && !next.pattern)) {
+          setNftResolve({
+            status: 'error',
+            message:
+              'Не удалось автоматически распознать атрибуты из API. Подарок выставлен (если распознан), остальное выбери вручную.',
+          });
+          if (next.gift) {
+            setFormData(prev => ({ ...prev, gift: next.gift }));
+          }
+          return;
+        }
+
+        setFormData(next);
+        onApply(next);
+        setNftResolve({ status: 'success', message: 'Готово — данные подтянуты.' });
+      } catch (e) {
+        setNftResolve({
+          status: 'error',
+          message: 'Ошибка запроса. Проверь прокси/сеть или настрой VITE_BACKEND_URL для своего сервера.',
+        });
+      }
+    }, 450);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nftLink, isOpen]);
 
   // Загружаем Original.json при выборе подарка (для будущего использования)
   useOriginalLottie(formData.gift);
@@ -196,9 +449,6 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
     }
   };
 
-  // Получаем список подарков из предзагруженных данных
-  const gifts = Array.isArray(preloadedData?.gifts) ? preloadedData.gifts : [];
-
   if (!isOpen) return null;
 
   return (
@@ -242,6 +492,25 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
         </div>
 
         <div className="modal-body">
+          {/* Быстрое заполнение по ссылке */}
+          <div className="form-group">
+            <label htmlFor="nft-link">Ссылка на NFT</label>
+            <input
+              id="nft-link"
+              type="text"
+              className="text-input"
+              value={nftLink}
+              onChange={(e) => setNftLink(e.target.value)}
+              placeholder="https://t.me/nft/BlingBinky-371"
+              autoComplete="off"
+            />
+            {nftResolve.status !== 'idle' ? (
+              <div className={`nft-resolve-hint nft-resolve-hint--${nftResolve.status}`}>
+                {nftResolve.message}
+              </div>
+            ) : null}
+          </div>
+
           {/* Выбор подарка */}
           <div className="form-group">
             <label htmlFor="gift-select">Подарок</label>
@@ -249,11 +518,39 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
               id="gift-select"
               value={formData.gift}
               onChange={(value) => handleInputChange('gift', value)}
-              options={gifts}
+              options={giftOptions}
               placeholder="Выберите подарок"
               searchPlaceholder="Поиск подарков..."
-              disabled={isPreloading}
-              isLoading={isPreloading}
+              disabled={isPreloading || isNftResolving}
+              isLoading={isPreloading || isNftResolving}
+              renderValue={(opt) => (
+                <div className="select-option-row">
+                  <img
+                    className="select-option-icon"
+                    src={opt.imageUrl}
+                    alt={opt.label}
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                  <span className="select-option-label">{opt.label}</span>
+                </div>
+              )}
+              renderOption={(opt) => (
+                <div className="select-option-row">
+                  <img
+                    className="select-option-icon"
+                    src={opt.imageUrl}
+                    alt={opt.label}
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                  <span className="select-option-label">{opt.label}</span>
+                </div>
+              )}
             />
           </div>
 
@@ -264,11 +561,53 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
               id="model-select"
               value={formData.model}
               onChange={(value) => handleInputChange('model', value)}
-              options={giftModels}
+              options={modelOptions}
               placeholder={formData.gift ? "Выберите модель" : "Сначала выберите подарок"}
               searchPlaceholder="Поиск моделей..."
-              disabled={!formData.gift}
-              isLoading={formData.gift && isModelsLoading}
+              disabled={!formData.gift || isNftResolving}
+              isLoading={isNftResolving || (formData.gift && isModelsLoading)}
+              renderValue={(opt) => (
+                <div className="select-option-row">
+                  {opt.imageUrl ? (
+                    <img
+                      className="select-option-icon"
+                      src={opt.imageUrl}
+                      alt={opt.label}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : null}
+                  <span className="select-option-label">{opt.label}</span>
+                  {rarityPermilleToPercentText(opt.rarityPermille) ? (
+                    <span className="select-option-right">
+                      ({rarityPermilleToPercentText(opt.rarityPermille)})
+                    </span>
+                  ) : null}
+                </div>
+              )}
+              renderOption={(opt) => (
+                <div className="select-option-row">
+                  {opt.imageUrl ? (
+                    <img
+                      className="select-option-icon"
+                      src={opt.imageUrl}
+                      alt={opt.label}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : null}
+                  <span className="select-option-label">{opt.label}</span>
+                  {rarityPermilleToPercentText(opt.rarityPermille) ? (
+                    <span className="select-option-right">
+                      ({rarityPermilleToPercentText(opt.rarityPermille)})
+                    </span>
+                  ) : null}
+                </div>
+              )}
             />
           </div>
 
@@ -279,11 +618,41 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
               id="backdrop-select"
               value={formData.backdrop}
               onChange={(value) => handleInputChange('backdrop', value)}
-              options={giftBackdrops}
+              options={backdropOptions}
               placeholder={formData.gift ? "Выберите фон" : "Сначала выберите подарок"}
               searchPlaceholder="Поиск фонов..."
-              disabled={!formData.gift}
-              isLoading={formData.gift && isBackdropsLoading}
+              disabled={!formData.gift || isNftResolving}
+              isLoading={isNftResolving || (formData.gift && isBackdropsLoading)}
+              renderValue={(opt) => (
+                <div className="select-option-row">
+                  {opt.centerColor ? (
+                    <span
+                      className="select-option-swatch"
+                      style={{
+                        background: opt.edgeColor
+                          ? `radial-gradient(circle at center, ${opt.centerColor}, ${opt.edgeColor})`
+                          : opt.centerColor,
+                      }}
+                    />
+                  ) : null}
+                  <span className="select-option-label">{opt.label}</span>
+                </div>
+              )}
+              renderOption={(opt) => (
+                <div className="select-option-row">
+                  {opt.centerColor ? (
+                    <span
+                      className="select-option-swatch"
+                      style={{
+                        background: opt.edgeColor
+                          ? `radial-gradient(circle at center, ${opt.centerColor}, ${opt.edgeColor})`
+                          : opt.centerColor,
+                      }}
+                    />
+                  ) : null}
+                  <span className="select-option-label">{opt.label}</span>
+                </div>
+              )}
             />
           </div>
 
@@ -294,11 +663,43 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
               id="pattern-select"
               value={formData.pattern}
               onChange={(value) => handleInputChange('pattern', value)}
-              options={giftPatterns}
+              options={patternOptions}
               placeholder={formData.gift ? "Выберите узор" : "Сначала выберите подарок"}
               searchPlaceholder="Поиск узоров..."
-              disabled={!formData.gift}
-              isLoading={formData.gift && isPatternsLoading}
+              disabled={!formData.gift || isNftResolving}
+              isLoading={isNftResolving || (formData.gift && isPatternsLoading)}
+              renderValue={(opt) => (
+                <div className="select-option-row">
+                  {opt.imageUrl ? (
+                    <img
+                      className="select-option-icon select-option-icon--square"
+                      src={opt.imageUrl}
+                      alt={opt.label}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : null}
+                  <span className="select-option-label">{opt.label}</span>
+                </div>
+              )}
+              renderOption={(opt) => (
+                <div className="select-option-row">
+                  {opt.imageUrl ? (
+                    <img
+                      className="select-option-icon select-option-icon--square"
+                      src={opt.imageUrl}
+                      alt={opt.label}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : null}
+                  <span className="select-option-label">{opt.label}</span>
+                </div>
+              )}
             />
           </div>
 

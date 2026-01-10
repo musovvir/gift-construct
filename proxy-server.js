@@ -11,51 +11,51 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.raw({ type: 'application/octet-stream', limit: '50mb' }));
 
 // Включаем CORS с более широкими настройками
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
-  credentials: false
-}));
+app.use(
+  cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+    credentials: false,
+  })
+);
 
 // Middleware для логирования запросов
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
   next();
 });
 
 // Обработка preflight запросов
-app.options('*', (req, res) => {
+app.options('*', (_req, res) => {
   res.status(200).end();
 });
 
 // Тестовый эндпоинт для проверки работы прокси
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+app.get('/health', (_req, res) => {
+  res.json({
+    status: 'ok',
     message: 'Proxy server is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
 // Простой прокси для CDN (все методы) - должен быть первым
 app.all('/cdn/*', async (req, res) => {
   try {
-    // Формируем URL с учетом query параметров
     const queryString = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
     const path = req.path.replace('/cdn', '');
     const url = `https://cdn.changes.tg${path}${queryString}`;
     console.log(`[CDN] Proxying request: ${req.method} ${req.path} -> ${url}`);
-    
+
     const fetchOptions = {
       method: req.method,
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; Local-Proxy/1.0)',
-        'Accept': '*/*'
-      }
+        Accept: '*/*',
+      },
     };
 
-    // Передаем тело запроса для POST/PUT/PATCH
     if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
       if (Buffer.isBuffer(req.body)) {
         fetchOptions.body = req.body;
@@ -80,8 +80,11 @@ app.all('/cdn/*', async (req, res) => {
     res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
     res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
 
-    // Для изображений и бинарных файлов
-    if (contentType.startsWith('image/') || contentType.includes('octet-stream') || contentType.includes('application/octet-stream')) {
+    if (
+      contentType.startsWith('image/') ||
+      contentType.includes('octet-stream') ||
+      contentType.includes('application/octet-stream')
+    ) {
       const buffer = await response.arrayBuffer();
       res.send(Buffer.from(buffer));
     } else {
@@ -98,26 +101,23 @@ app.all('/cdn/*', async (req, res) => {
 // Простой прокси для API (все методы) - обрабатывает все остальные запросы
 app.all('*', async (req, res) => {
   try {
-    // Формируем URL с учетом query параметров
     const queryString = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
     const path = req.path === '/' ? '' : req.path;
     const url = `https://api.changes.tg${path}${queryString}`;
     console.log(`[API] Proxying request: ${req.method} ${req.path} -> ${url}`);
-    
+
     const fetchOptions = {
       method: req.method,
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; Local-Proxy/1.0)',
-        'Accept': 'application/json'
-      }
+        Accept: 'application/json',
+      },
     };
 
-    // Передаем заголовки авторизации, если есть
     if (req.headers.authorization) {
-      fetchOptions.headers['Authorization'] = req.headers.authorization;
+      fetchOptions.headers.Authorization = req.headers.authorization;
     }
 
-    // Передаем тело запроса для POST/PUT/PATCH/DELETE
     if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
       if (Buffer.isBuffer(req.body)) {
         fetchOptions.body = req.body;
@@ -136,11 +136,11 @@ app.all('*', async (req, res) => {
     if (!response.ok) {
       console.error(`[API] Request failed: ${response.status} ${response.statusText} for ${url}`);
       const errorText = await response.text().catch(() => response.statusText);
-      return res.status(response.status).json({ 
-        error: 'API request failed', 
+      return res.status(response.status).json({
+        error: 'API request failed',
         status: response.status,
         statusText: response.statusText,
-        message: errorText
+        message: errorText,
       });
     }
 
@@ -160,7 +160,7 @@ app.all('*', async (req, res) => {
 });
 
 // Обработка ошибок
-app.use((error, req, res) => {
+app.use((error, _req, res, _next) => {
   console.error('Server error:', error);
   res.status(500).json({ error: 'Internal server error', message: error.message });
 });
@@ -172,3 +172,5 @@ app.listen(PORT, () => {
   console.log(`🔧 Use this as API_BASE: http://localhost:${PORT}`);
   console.log(`\nReady to proxy requests!`);
 });
+
+

@@ -9,7 +9,9 @@ export const queryKeys = {
   backdropsByGift: (giftName) => ['backdrops', giftName],
   backdropDetailsForGift: (giftName) => ['backdrop-details', giftName],
   modelsByGift: (giftName) => ['models', giftName],
+  modelDetailsByGift: (giftName) => ['model-details', giftName],
   patternsByGift: (giftName) => ['patterns', giftName],
+  giftSupplyByGift: (giftName) => ['gift-supply', giftName],
   lottieModel: (giftName, modelName) => ['lottie', giftName, modelName],
   patternImage: (giftName, patternName) => ['pattern-image', giftName, patternName],
   preloadData: ['preload-data'],
@@ -69,6 +71,25 @@ export const useModelsForGift = (giftName) => {
     queryFn: () => apiService.getModelsForGift(giftName),
     enabled: !!giftName, // Выполняется только если указан подарок
     staleTime: 5 * 60 * 1000, // 5 минут
+  });
+};
+
+// Хук для получения деталей моделей для конкретного подарка (включая редкость, если есть)
+export const useModelDetailsForGift = (giftName) => {
+  return useQuery({
+    queryKey: queryKeys.modelDetailsByGift(giftName),
+    queryFn: () => apiService.getModelDetailsForGift(giftName),
+    enabled: !!giftName,
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useGiftSupplyForGift = (giftName) => {
+  return useQuery({
+    queryKey: queryKeys.giftSupplyByGift(giftName),
+    queryFn: () => apiService.getGiftSupplyForGift(giftName),
+    enabled: !!giftName,
+    staleTime: 30 * 60 * 1000,
   });
 };
 
