@@ -144,8 +144,10 @@ export const createCircularPattern = (
     { radius: 115, elements: 20, size: 6 }   // Самое внешнее кольцо
   ];
 
-  // Извлекаем поворот из Lottie данных или используем значение по умолчанию
-  const rotation = lottieData ? extractRotationFromLottie(lottieData) : -15;
+  // Поворот узора: по умолчанию не вращаем.
+  // Если угол приходит в данных (например, из Lottie), применяем его.
+  const extractedRotation = lottieData ? extractRotationFromLottie(lottieData) : 0;
+  const rotation = Number.isFinite(extractedRotation) ? extractedRotation : 0;
   
 
   const patternElements = [];

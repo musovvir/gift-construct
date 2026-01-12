@@ -167,17 +167,27 @@ const GridCell = ({
   }, []);
 
   // === Вычисления цветов ===
-  const getCellStyles = () => {
-    const styles = {};
+  const getBackdropGradientBackground = () => {
     if (cell.backdrop && allBackdropDetails) {
       const centerColor = findBackdropColor(cell.backdrop, allBackdropDetails);
       const edgeColor = findBackdropEdgeColor(cell.backdrop, allBackdropDetails);
 
       if (centerColor && edgeColor) {
-        styles.background = `radial-gradient(circle at center, ${centerColor}, ${edgeColor})`;
-      } else if (centerColor) {
-        styles.background = `radial-gradient(circle at center, ${centerColor}, ${getDarkerShade(centerColor, 0.8)})`;
+        return `radial-gradient(circle at center, ${centerColor}, ${edgeColor})`;
       }
+      if (centerColor) {
+        return `radial-gradient(circle at center, ${centerColor}, ${getDarkerShade(centerColor, 0.8)})`;
+      }
+    }
+    return null;
+  };
+
+  const backdropGradientBackground = getBackdropGradientBackground();
+
+  const getCellStyles = () => {
+    const styles = {};
+    if (backdropGradientBackground) {
+      styles.background = backdropGradientBackground;
     }
     return styles;
   };
@@ -204,6 +214,24 @@ const GridCell = ({
     return mixWithWhite(baseColor || '#000000', 0.28);
   };
 
+  const getRibbonGradientColors = () => {
+    const fallback = { start: '#0B4DB3', end: '#06224D' };
+    if (!cell.backdrop || !allBackdropDetails) return fallback;
+
+    const centerHex = findBackdropColor(cell.backdrop, allBackdropDetails);
+    const edgeHex = findBackdropEdgeColor(cell.backdrop, allBackdropDetails);
+
+    const base = centerHex || edgeHex;
+    if (!base) return fallback;
+
+    // Риббон должен отражать выбранный "Фон": делаем читаемый градиент на базе цветов бэкдропа
+    const start = getDarkerShade(base, 0.92);
+    const end = getDarkerShade(edgeHex || base, 0.62);
+    return { start, end };
+  };
+
+  const ribbonGradientColors = getRibbonGradientColors();
+
   // === Стили для drag and drop ===
   const dragStyle = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
@@ -217,6 +245,8 @@ const GridCell = ({
     isDragging ? 'dragging' : '',
     isOver ? 'drag-over' : ''
   ].filter(Boolean).join(' ');
+
+  const patternOverlayOpacity = 0.38;
 
   return (
     <div
@@ -240,6 +270,15 @@ const GridCell = ({
             lottieData,
             false
           )}
+          {backdropGradientBackground ? (
+            <div
+              className="pattern-overlay"
+              style={{
+                background: backdropGradientBackground,
+                opacity: patternOverlayOpacity,
+              }}
+            />
+          ) : null}
         </div>
       )}
 
@@ -279,8 +318,8 @@ const GridCell = ({
           >
             <defs>
               <linearGradient id={`gift-ribbon-gradient-${cell.id}`} x1="28" y1="1" x2="28" y2="55" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#0B4DB3" />
-                <stop offset="1" stopColor="#06224D" />
+                <stop stopColor={ribbonGradientColors.start} />
+                <stop offset="1" stopColor={ribbonGradientColors.end} />
               </linearGradient>
             </defs>
             {/* Плашка в верхнем‑правом углу (диагональная плашка с градиентом) */}

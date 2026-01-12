@@ -360,6 +360,15 @@ body {
   -ms-user-select: none;
   border-radius: 12px;
   overflow: hidden;
+  opacity: 0.5;
+}
+
+.pattern-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  border-radius: 12px;
 }
 
 .gift-container {
