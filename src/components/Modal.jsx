@@ -29,6 +29,13 @@ const rarityPermilleToPercentText = (rarityPermille) => {
   return `${pretty}%`;
 };
 
+const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+const compareLabel = (a, b) => collator.compare(String(a?.label ?? ''), String(b?.label ?? ''));
+const getRarityValue = (x) => {
+  const v = Number(x?.rarityPermille ?? x?.rarity_permille ?? x?.rarity);
+  return Number.isFinite(v) ? v : null;
+};
+
 const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPreloading }) => {
   const { copyCellData, getCopiedData, hasCopiedData } = useCopyPaste();
   const [formData, setFormData] = useState({
@@ -106,7 +113,8 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
   }, [preloadedData?.idToName]);
 
   const giftOptions = useMemo(() => {
-    return gifts.map(g => {
+    const sorted = [...gifts].sort((a, b) => collator.compare(String(a), String(b)));
+    return sorted.map(g => {
       const giftId = giftNameToId[g] || giftNameToId[normalizeKey(g)];
       return {
         value: g,
@@ -118,7 +126,7 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
 
   const modelOptions = useMemo(() => {
     const raw = Array.isArray(giftModelDetailsRaw) ? giftModelDetailsRaw : giftModels;
-    return raw
+    const opts = raw
       .map(item => {
         if (typeof item === 'string') {
           return {
@@ -137,15 +145,28 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
         };
       })
       .filter(Boolean);
+
+    // Модели: более редкие сначала. Если редкости нет — в конец. При равенстве — по алфавиту.
+    return [...opts].sort((a, b) => {
+      const ra = getRarityValue(a);
+      const rb = getRarityValue(b);
+      if (ra == null && rb == null) return compareLabel(a, b);
+      if (ra == null) return 1;
+      if (rb == null) return -1;
+      if (ra !== rb) return ra - rb; // меньше % => более редкая
+      return compareLabel(a, b);
+    });
   }, [giftModelDetailsRaw, giftModels, formData.gift]);
 
   const backdropOptions = useMemo(() => {
     const details = Array.isArray(giftBackdropDetailsRaw) ? giftBackdropDetailsRaw : [];
     // fallback на "плоский" список если деталей нет
     if (details.length === 0) {
-      return giftBackdrops.map(name => ({ value: name, label: name }));
+      const flat = giftBackdrops.map(name => ({ value: name, label: name }));
+      // если нет деталей — сортируем хотя бы по алфавиту
+      return [...flat].sort(compareLabel);
     }
-    return details
+    const opts = details
       .map(item => {
         const name = item?.name ?? item?.label ?? item?.value;
         if (!name) return null;
@@ -154,15 +175,28 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
         return {
           value: name,
           label: name,
+          rarityPermille: item?.rarityPermille ?? item?.rarity_permille ?? item?.rarity,
           centerColor: center,
           edgeColor: edge,
         };
       })
       .filter(Boolean);
+
+    // Фоны: по редкости (если приходит), иначе — в конец. При равенстве — по алфавиту.
+    return [...opts].sort((a, b) => {
+      const ra = getRarityValue(a);
+      const rb = getRarityValue(b);
+      if (ra == null && rb == null) return compareLabel(a, b);
+      if (ra == null) return 1;
+      if (rb == null) return -1;
+      if (ra !== rb) return ra - rb;
+      return compareLabel(a, b);
+    });
   }, [giftBackdropDetailsRaw, giftBackdrops]);
 
   const patternOptions = useMemo(() => {
-    return giftPatterns.map(p => ({
+    const sorted = [...giftPatterns].sort((a, b) => collator.compare(String(a), String(b)));
+    return sorted.map(p => ({
       value: p,
       label: p,
       imageUrl: formData.gift ? patternThumbUrl(formData.gift, p) : null,
@@ -501,7 +535,7 @@ const Modal = ({ isOpen, cell, onClose, onApply, onReset, preloadedData, isPrelo
               className="text-input"
               value={nftLink}
               onChange={(e) => setNftLink(e.target.value)}
-              placeholder="https://t.me/nft/BlingBinky-371"
+              placeholder="t.me/nft/BlingBinky-371"
               autoComplete="off"
             />
             {nftResolve.status !== 'idle' ? (

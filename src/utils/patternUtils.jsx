@@ -15,7 +15,10 @@ export const findBackdropColor = (backdropName, backdropDetails) => {
     return null;
   }
   
-  const backdrop = backdropDetails.find(item => item.name === backdropName);
+  const norm = (s) => String(s ?? '').toLowerCase().replace(/[^a-z0-9]+/gi, '');
+  const backdrop =
+    backdropDetails.find(item => item?.name === backdropName) ||
+    backdropDetails.find(item => norm(item?.name) === norm(backdropName));
   if (!backdrop) {
     return null;
   }
@@ -31,7 +34,10 @@ export const findBackdropColor = (backdropName, backdropDetails) => {
 export const findBackdropEdgeColor = (backdropName, backdropDetails) => {
   if (!backdropName || !backdropDetails) return null;
   
-  const backdrop = backdropDetails.find(item => item.name === backdropName);
+  const norm = (s) => String(s ?? '').toLowerCase().replace(/[^a-z0-9]+/gi, '');
+  const backdrop =
+    backdropDetails.find(item => item?.name === backdropName) ||
+    backdropDetails.find(item => norm(item?.name) === norm(backdropName));
   if (!backdrop) return null;
   
   // Сначала пробуем hex.edgeColor, потом конвертируем edgeColor
