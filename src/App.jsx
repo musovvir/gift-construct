@@ -43,14 +43,14 @@ function App() {
         <CopyPasteProvider>
           <div className="app">
           <header className="app-header">
-            <h1>For my dear «Midnight Blue» community from{' '}
+            <h1>Подписывайтесь на официальный канал и следите за обновлениями{' '}
               <a
-                href="https://t.me/musovvir_v"
+                href="https://t.me/GiftConstructChannel"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="header-link"
               >
-                @musovvir_v
+                @GiftConstructChannel
               </a>
             </h1>
             <ThemeToggle />
