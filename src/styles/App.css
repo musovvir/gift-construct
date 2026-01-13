@@ -238,9 +238,10 @@ body {
 }
 
 .grid-cell.filled {
-  /* Отключаем стандартные touch-жесты для заполненных ячеек (zoom, scroll) */
-  touch-action: none;
-  -ms-touch-action: none;
+/* Разрешаем скролл страницы при свайпе по заполненной ячейке.
+  Drag-and-drop остаётся через dnd-kit (delay/distance). */
+  touch-action: pan-y;
+  -ms-touch-action: pan-y;
 }
 
 .gift-ribbon {
